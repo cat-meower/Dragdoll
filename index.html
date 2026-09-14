@@ -98,6 +98,13 @@
     }
     prepareReversedSound();
 
+    function playNormalBounceSound() {
+      collisionSound.currentTime = 0;
+      collisionSound.playbackRate = 1;
+      collisionSound.volume = 1;
+      collisionSound.play().catch(() => {});
+    }
+
     function playReversedBounceSound() {
       if (!reversedBounceReady || !audioContext) return;
       if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
@@ -182,8 +189,12 @@
       setTimeout(() => explosion.remove(), 700);
     }
 
-    function edgeEffects(x, y, dx, dy) {
-      playReversedBounceSound();
+    function edgeEffects(x, y, dx, dy, reversed) {
+      if (reversed) {
+        playReversedBounceSound();
+      } else {
+        playNormalBounceSound();
+      }
       mammottBurst(x + size / 2, y + size / 2);
       confettiBurst(x + size / 2, y + size / 2, dx, dy);
     }
@@ -196,19 +207,19 @@
 
       if (redX <= 0 || redX >= maxX) {
         redX = Math.max(0, Math.min(redX, maxX)); redDX *= -1;
-        edgeEffects(redX, redY, redDX > 0 ? 1 : -1, 0);
+        edgeEffects(redX, redY, redDX > 0 ? 1 : -1, 0, false);
       }
       if (redY <= 0 || redY >= maxY) {
         redY = Math.max(0, Math.min(redY, maxY)); redDY *= -1;
-        edgeEffects(redX, redY, 0, redDY > 0 ? 1 : -1);
+        edgeEffects(redX, redY, 0, redDY > 0 ? 1 : -1, false);
       }
       if (blueX <= 0 || blueX >= maxX) {
         blueX = Math.max(0, Math.min(blueX, maxX)); blueDX *= -1;
-        edgeEffects(blueX, blueY, blueDX > 0 ? 1 : -1, 0);
+        edgeEffects(blueX, blueY, blueDX > 0 ? 1 : -1, 0, true);
       }
       if (blueY <= 0 || blueY >= maxY) {
         blueY = Math.max(0, Math.min(blueY, maxY)); blueDY *= -1;
-        edgeEffects(blueX, blueY, 0, blueDY > 0 ? 1 : -1);
+        edgeEffects(blueX, blueY, 0, blueDY > 0 ? 1 : -1, true);
       }
 
       const centerDX = (blueX + size / 2) - (redX + size / 2);
