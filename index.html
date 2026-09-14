@@ -26,24 +26,25 @@
   </style>
 </head>
 <body>
-  <div class="sphere red" id="redSphere" aria-label="Smiling red sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth smile"></div></div>
-  <div class="sphere blue" id="blueSphere" aria-label="Frowning blue sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth frown"></div></div>
-  <div class="sphere yellow" id="yellowSphere" aria-label="Indifferent yellow sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth straight"></div></div>
+  <div class="sphere red" id="redSphere1" aria-label="Smiling red sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth smile"></div></div>
+  <div class="sphere red" id="redSphere2" aria-label="Smiling red sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth smile"></div></div>
+  <div class="sphere blue" id="blueSphere1" aria-label="Frowning blue sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth frown"></div></div>
+  <div class="sphere blue" id="blueSphere2" aria-label="Frowning blue sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth frown"></div></div>
+  <div class="sphere yellow" id="yellowSphere1" aria-label="Indifferent yellow sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth straight"></div></div>
+  <div class="sphere yellow" id="yellowSphere2" aria-label="Indifferent yellow sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth straight"></div></div>
   <audio id="collisionSound" preload="auto"><source src="Mammott_Memory_Sample.mp3.mpeg" type="audio/mpeg"></audio>
   <script>
     const collisionSound = document.getElementById('collisionSound');
-    const redSphere = document.getElementById('redSphere');
-    const blueSphere = document.getElementById('blueSphere');
-    const yellowSphere = document.getElementById('yellowSphere');
     const size = 104;
     const gap = 12;
     const collisionCooldown = 350;
+    const yellowPitch = 1.32;
 
     let audioContext = null;
     let reversedBounceBuffer = null;
     let reversedBounceReady = false;
 
-    async function prepareReversedSound() {
+    async function prepareAudio() {
       try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const response = await fetch('Mammott_Memory_Sample.mp3.mpeg');
@@ -58,7 +59,7 @@
         reversedBounceReady = true;
       } catch (error) { reversedBounceReady = false; }
     }
-    prepareReversedSound();
+    prepareAudio();
 
     function playNormalBounceSound() {
       collisionSound.currentTime = 0;
@@ -77,30 +78,29 @@
       source.connect(gain); gain.connect(audioContext.destination); source.start();
     }
 
+    // Yellow uses the real Mammott sample too, but pitch-shifted upward.
     function playYellowSound() {
       try {
         if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
         if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
-        const now = audioContext.currentTime;
-        const notes = [523.25, 659.25, 783.99];
-        notes.forEach((frequency, index) => {
-          const oscillator = audioContext.createOscillator();
-          const gain = audioContext.createGain();
-          oscillator.type = 'triangle';
-          oscillator.frequency.value = frequency;
-          const start = now + index * 0.07;
-          gain.gain.setValueAtTime(0.0001, start);
-          gain.gain.exponentialRampToValueAtTime(0.16, start + 0.015);
-          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
-          oscillator.connect(gain); gain.connect(audioContext.destination);
-          oscillator.start(start); oscillator.stop(start + 0.2);
-        });
+        const response = fetch('Mammott_Memory_Sample.mp3.mpeg')
+          .then(r => r.arrayBuffer())
+          .then(data => audioContext.decodeAudioData(data))
+          .then(buffer => {
+            const source = audioContext.createBufferSource();
+            const gain = audioContext.createGain();
+            source.buffer = buffer;
+            source.playbackRate.value = yellowPitch;
+            gain.gain.value = 1;
+            source.connect(gain); gain.connect(audioContext.destination); source.start();
+          })
+          .catch(() => {});
       } catch (error) {}
     }
 
     function randomPosition(existingPositions) {
       let px = 0, py = 0;
-      for (let i = 0; i < 200; i++) {
+      for (let i = 0; i < 300; i++) {
         px = Math.random() * Math.max(0, window.innerWidth - size);
         py = Math.random() * Math.max(0, window.innerHeight - size);
         if (existingPositions.every(([x,y]) => Math.hypot(px-x, py-y) >= size + gap)) return [px,py];
@@ -108,60 +108,101 @@
       return [Math.max(0, Math.min(px, window.innerWidth-size)), Math.max(0, Math.min(py, window.innerHeight-size))];
     }
 
-    const red = { name:'red', element:redSphere, x:0, y:0, dx:0, dy:0 };
-    const blue = { name:'blue', element:blueSphere, x:0, y:0, dx:0, dy:0 };
-    const yellow = { name:'yellow', element:yellowSphere, x:0, y:0, dx:0, dy:0 };
-    const balls = [red,blue,yellow];
-    [red.x,red.y] = randomPosition([]);
-    [blue.x,blue.y] = randomPosition([[red.x,red.y]]);
-    [yellow.x,yellow.y] = randomPosition([[red.x,red.y],[blue.x,blue.y]]);
+    const ballData = [
+      ['red', document.getElementById('redSphere1')],
+      ['red', document.getElementById('redSphere2')],
+      ['blue', document.getElementById('blueSphere1')],
+      ['blue', document.getElementById('blueSphere2')],
+      ['yellow', document.getElementById('yellowSphere1')],
+      ['yellow', document.getElementById('yellowSphere2')]
+    ];
+    const balls = [];
+    const usedPositions = [];
 
-    function randomVelocity() { return { dx:(Math.random()<.5?-1:1)*(2.8+Math.random()*1.8), dy:(Math.random()<.5?-1:1)*(2.2+Math.random()*1.8) }; }
-    for (const ball of balls) {
+    for (const [name, element] of ballData) {
+      const [x,y] = randomPosition(usedPositions);
+      usedPositions.push([x,y]);
       const velocity = randomVelocity();
-      ball.dx = velocity.dx; ball.dy = velocity.dy;
-      ball.element.style.left = ball.x+'px'; ball.element.style.top = ball.y+'px';
+      balls.push({ name, element, x, y, dx: velocity.dx, dy: velocity.dy });
+      element.style.left = x+'px';
+      element.style.top = y+'px';
+    }
+
+    function randomVelocity() {
+      return { dx:(Math.random()<.5?-1:1)*(2.8+Math.random()*1.8), dy:(Math.random()<.5?-1:1)*(2.2+Math.random()*1.8) };
     }
 
     const lastCollisions = new Map();
     function playCollisionSound() {
-      collisionSound.currentTime = 0; collisionSound.playbackRate = 0.72; collisionSound.volume = 1; collisionSound.play().catch(() => {});
+      collisionSound.currentTime = 0;
+      collisionSound.playbackRate = 0.72;
+      collisionSound.volume = 1;
+      collisionSound.play().catch(() => {});
     }
+
     function mammottBurst(edgeX,edgeY) {
-      const mammott = document.createElement('img'); mammott.className='mammott-pop'; mammott.src='mammot.jpg'; mammott.alt=''; mammott.style.left=edgeX+'px'; mammott.style.top=edgeY+'px'; document.body.appendChild(mammott); setTimeout(()=>mammott.remove(),1050);
+      const mammott = document.createElement('img');
+      mammott.className='mammott-pop'; mammott.src='mammot.jpg'; mammott.alt='';
+      mammott.style.left=edgeX+'px'; mammott.style.top=edgeY+'px';
+      document.body.appendChild(mammott); setTimeout(()=>mammott.remove(),1050);
     }
+
     function confettiBurst(edgeX,edgeY,directionX,directionY) {
       const colors=['#ff0000','#00aaff','#ffd400','#22bb55','#aa44ff','#ff66aa','#ff7a00','#00dddd','#ff33cc'];
       for(let i=0;i<90;i++) {
-        const piece=document.createElement('div'); piece.className='confetti'; piece.style.background=colors[Math.floor(Math.random()*colors.length)]; piece.style.left=edgeX+'px'; piece.style.top=edgeY+'px';
-        const angle=Math.random()*Math.PI*2, distance=70+Math.random()*190; let finalX=Math.cos(angle)*distance, finalY=Math.sin(angle)*distance;
-        if(directionX!==0) finalX=directionX*(50+Math.random()*180); if(directionY!==0) finalY=directionY*(50+Math.random()*180);
-        piece.style.setProperty('--dx',finalX+'px'); piece.style.setProperty('--dy',finalY+'px'); piece.style.setProperty('--rotation',(Math.random()*1440-720)+'deg'); piece.style.width=(4+Math.random()*6)+'px'; piece.style.height=(7+Math.random()*10)+'px'; document.body.appendChild(piece); setTimeout(()=>piece.remove(),950);
+        const piece=document.createElement('div'); piece.className='confetti';
+        piece.style.background=colors[Math.floor(Math.random()*colors.length)];
+        piece.style.left=edgeX+'px'; piece.style.top=edgeY+'px';
+        const angle=Math.random()*Math.PI*2, distance=70+Math.random()*190;
+        let finalX=Math.cos(angle)*distance, finalY=Math.sin(angle)*distance;
+        if(directionX!==0) finalX=directionX*(50+Math.random()*180);
+        if(directionY!==0) finalY=directionY*(50+Math.random()*180);
+        piece.style.setProperty('--dx',finalX+'px'); piece.style.setProperty('--dy',finalY+'px');
+        piece.style.setProperty('--rotation',(Math.random()*1440-720)+'deg');
+        piece.style.width=(4+Math.random()*6)+'px'; piece.style.height=(7+Math.random()*10)+'px';
+        document.body.appendChild(piece); setTimeout(()=>piece.remove(),950);
       }
     }
+
     function collisionExplosion(x,y,type) {
       const colors={orange:['#ffffff','#ffd0a0','#ff7a00','#b83b00'],green:['#ffffff','#aaffbb','#22bb55','#087a32'],purple:['#ffffff','#d88cff','#8a2be2','#4b0082']};
-      const [light,main,mid,dark]=colors[type]; const explosion=document.createElement('div'); explosion.className='collision-explosion'; explosion.style.setProperty('--light',light); explosion.style.setProperty('--main',main); explosion.style.setProperty('--dark',dark); explosion.style.left=x+'px'; explosion.style.top=y+'px'; document.body.appendChild(explosion); setTimeout(()=>explosion.remove(),700);
+      const [light,main,mid,dark]=colors[type];
+      const explosion=document.createElement('div'); explosion.className='collision-explosion';
+      explosion.style.setProperty('--light',light); explosion.style.setProperty('--main',main); explosion.style.setProperty('--dark',dark);
+      explosion.style.left=x+'px'; explosion.style.top=y+'px'; document.body.appendChild(explosion); setTimeout(()=>explosion.remove(),700);
     }
+
     function edgeEffects(ball,dx,dy) {
       if(ball.name==='blue') playReversedBounceSound();
       else if(ball.name==='yellow') playYellowSound();
       else playNormalBounceSound();
-      mammottBurst(ball.x+size/2,ball.y+size/2); confettiBurst(ball.x+size/2,ball.y+size/2,dx,dy);
+      mammottBurst(ball.x+size/2,ball.y+size/2);
+      confettiBurst(ball.x+size/2,ball.y+size/2,dx,dy);
     }
+
     function handleCollision(a,b) {
-      const centerDX=(b.x+size/2)-(a.x+size/2), centerDY=(b.y+size/2)-(a.y+size/2), distance=Math.hypot(centerDX,centerDY), minDistance=size;
+      const centerDX=(b.x+size/2)-(a.x+size/2), centerDY=(b.y+size/2)-(a.y+size/2);
+      const distance=Math.hypot(centerDX,centerDY), minDistance=size;
       if(distance>=minDistance || distance===0) return;
-      const nx=centerDX/distance, ny=centerDY/distance, relativeVelocity=(b.dx-a.dx)*nx+(b.dy-a.dy)*ny, key=[a.name,b.name].sort().join('-'), now=performance.now();
-      if(relativeVelocity>=0 || now-(lastCollisions.get(key)||0)<=collisionCooldown) return;
-      const overlap=minDistance-distance, collisionX=(a.x+b.x+size)/2, collisionY=(a.y+b.y+size)/2;
+      const nx=centerDX/distance, ny=centerDY/distance;
+      const relativeVelocity=(b.dx-a.dx)*nx+(b.dy-a.dy)*ny;
+      const key=[a.name,b.name].sort().join('-');
+      const pairKey=key+'-'+Math.min(a.element.id,b.element.id)+'-'+Math.max(a.element.id,b.element.id);
+      const now=performance.now();
+      if(relativeVelocity>=0 || now-(lastCollisions.get(pairKey)||0)<=collisionCooldown) return;
+
+      const overlap=minDistance-distance;
+      const collisionX=(a.x+b.x+size)/2, collisionY=(a.y+b.y+size)/2;
       a.x-=nx*overlap/2; a.y-=ny*overlap/2; b.x+=nx*overlap/2; b.y+=ny*overlap/2;
-      const oldDX=a.dx,oldDY=a.dy; a.dx=b.dx;a.dy=b.dy;b.dx=oldDX;b.dy=oldDY; lastCollisions.set(key,now);
+      const oldDX=a.dx,oldDY=a.dy; a.dx=b.dx;a.dy=b.dy;b.dx=oldDX;b.dy=oldDY;
+      lastCollisions.set(pairKey,now);
       playCollisionSound();
+
       if(key==='red-yellow') collisionExplosion(collisionX,collisionY,'orange');
-      if(key==='blue-yellow') collisionExplosion(collisionX,collisionY,'green');
-      if(key==='blue-red') collisionExplosion(collisionX,collisionY,'purple');
+      else if(key==='blue-yellow') collisionExplosion(collisionX,collisionY,'green');
+      else if(key==='blue-red') collisionExplosion(collisionX,collisionY,'purple');
     }
+
     function move() {
       const maxX=Math.max(0,window.innerWidth-size), maxY=Math.max(0,window.innerHeight-size);
       for(const ball of balls) {
@@ -169,8 +210,15 @@
         if(ball.x<=0 || ball.x>=maxX) { ball.x=Math.max(0,Math.min(ball.x,maxX)); ball.dx*=-1; edgeEffects(ball,ball.dx>0?1:-1,0); }
         if(ball.y<=0 || ball.y>=maxY) { ball.y=Math.max(0,Math.min(ball.y,maxY)); ball.dy*=-1; edgeEffects(ball,0,ball.dy>0?1:-1); }
       }
-      handleCollision(red,blue); handleCollision(red,yellow); handleCollision(blue,yellow);
-      for(const ball of balls) { ball.element.style.left=ball.x+'px'; ball.element.style.top=ball.y+'px'; }
+
+      for(let i=0;i<balls.length;i++) {
+        for(let j=i+1;j<balls.length;j++) handleCollision(balls[i],balls[j]);
+      }
+
+      for(const ball of balls) {
+        ball.element.style.left=ball.x+'px';
+        ball.element.style.top=ball.y+'px';
+      }
       requestAnimationFrame(move);
     }
     move();
