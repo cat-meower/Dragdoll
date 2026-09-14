@@ -26,21 +26,15 @@
   </style>
 </head>
 <body>
-  <div class="sphere red" id="redSphere" aria-label="Smiling red sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth smile"></div></div>
-  <div class="sphere red" id="redSphere2" aria-label="Smiling red sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth smile"></div></div>
-  <div class="sphere blue" id="blueSphere" aria-label="Frowning blue sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth frown"></div></div>
-  <div class="sphere blue" id="blueSphere2" aria-label="Frowning blue sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth frown"></div></div>
-  <div class="sphere yellow" id="yellowSphere" aria-label="Indifferent yellow sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth straight"></div></div>
-  <div class="sphere yellow" id="yellowSphere2" aria-label="Indifferent yellow sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth straight"></div></div>
+  <div id="balls"></div>
   <audio id="collisionSound" preload="auto"><source src="Mammott_Memory_Sample.mp3.mpeg" type="audio/mpeg"></audio>
   <script>
     const collisionSound = document.getElementById('collisionSound');
+    const ballsContainer = document.getElementById('balls');
     const size = 104;
     const gap = 12;
     const collisionCooldown = 350;
-    const redElements = [document.getElementById('redSphere'), document.getElementById('redSphere2')];
-    const blueElements = [document.getElementById('blueSphere'), document.getElementById('blueSphere2')];
-    const yellowElements = [document.getElementById('yellowSphere'), document.getElementById('yellowSphere2')];
+    const ballTypes = ['red','red','red','red','blue','blue','blue','blue','yellow','yellow','yellow','yellow'];
 
     let audioContext = null;
     let reversedBounceBuffer = null;
@@ -62,6 +56,19 @@
       } catch (error) { reversedBounceReady = false; }
     }
     prepareAudio();
+
+    function makeBall(type, index) {
+      const ball = document.createElement('div');
+      ball.className = `sphere ${type}`;
+      ball.id = `${type}Sphere${index + 1}`;
+      ball.setAttribute('aria-label', `${type} sphere`);
+      const eyeLeft = document.createElement('div'); eyeLeft.className = 'eye left';
+      const eyeRight = document.createElement('div'); eyeRight.className = 'eye right';
+      const mouth = document.createElement('div'); mouth.className = `mouth ${type === 'red' ? 'smile' : type === 'blue' ? 'frown' : 'straight'}`;
+      ball.append(eyeLeft, eyeRight, mouth);
+      ballsContainer.appendChild(ball);
+      return ball;
+    }
 
     function playNormalBounceSound() {
       collisionSound.currentTime = 0;
@@ -93,7 +100,7 @@
 
     function randomPosition(existingPositions) {
       let px = 0, py = 0;
-      for (let i = 0; i < 200; i++) {
+      for (let i = 0; i < 300; i++) {
         px = Math.random() * Math.max(0, window.innerWidth - size);
         py = Math.random() * Math.max(0, window.innerHeight - size);
         if (existingPositions.every(([x,y]) => Math.hypot(px-x, py-y) >= size + gap)) return [px,py];
@@ -104,16 +111,15 @@
     function randomVelocity() { return { dx:(Math.random()<.5?-1:1)*(2.8+Math.random()*1.8), dy:(Math.random()<.5?-1:1)*(2.2+Math.random()*1.8) }; }
 
     const balls = [];
-    const elements = [redElements, blueElements, yellowElements];
-    const names = ['red','red','blue','blue','yellow','yellow'];
-    const allElements = [...redElements, ...blueElements, ...yellowElements];
     const usedPositions = [];
-    for (let i = 0; i < allElements.length; i++) {
+    for (let i = 0; i < ballTypes.length; i++) {
+      const type = ballTypes[i];
+      const element = makeBall(type, i);
       const [x,y] = randomPosition(usedPositions);
       usedPositions.push([x,y]);
       const velocity = randomVelocity();
-      balls.push({ name:names[i], element:allElements[i], x, y, dx:velocity.dx, dy:velocity.dy });
-      allElements[i].style.left=x+'px'; allElements[i].style.top=y+'px';
+      balls.push({ name:type, element, x, y, dx:velocity.dx, dy:velocity.dy });
+      element.style.left=x+'px'; element.style.top=y+'px';
     }
 
     const lastCollisions = new Map();
@@ -136,8 +142,8 @@
       }
     }
     function collisionExplosion(x,y,type) {
-      const colors={orange:['#ffffff','#ffd0a0','#ff7a00','#b83b00'],green:['#ffffff','#aaffbb','#22bb55','#087a32'],purple:['#ffffff','#d88cff','#8a2be2','#4b0082']};
-      const [light,main,dark]=[colors[type][0],colors[type][2],colors[type][3]];
+      const colors={orange:['#ffffff','#ff7a00','#b83b00'],green:['#ffffff','#22bb55','#087a32'],purple:['#ffffff','#8a2be2','#4b0082']};
+      const [light,main,dark]=colors[type];
       const explosion=document.createElement('div'); explosion.className='collision-explosion'; explosion.style.setProperty('--light',light); explosion.style.setProperty('--main',main); explosion.style.setProperty('--dark',dark); explosion.style.left=x+'px'; explosion.style.top=y+'px'; document.body.appendChild(explosion); setTimeout(()=>explosion.remove(),500);
     }
     function edgeEffects(ball,dx,dy) {
@@ -149,7 +155,7 @@
     function handleCollision(a,b) {
       const centerDX=(b.x+size/2)-(a.x+size/2), centerDY=(b.y+size/2)-(a.y+size/2), distance=Math.hypot(centerDX,centerDY), minDistance=size;
       if(distance>=minDistance || distance===0) return;
-      const nx=centerDX/distance, ny=centerDY/distance, relativeVelocity=(b.dx-a.dx)*nx+(b.dy-a.dy)*ny, key=[a.name,a.element.id,b.name,b.element.id].sort().join('-'), now=performance.now();
+      const nx=centerDX/distance, ny=centerDY/distance, relativeVelocity=(b.dx-a.dx)*nx+(b.dy-a.dy)*ny, key=[a.element.id,b.element.id].sort().join('-'), now=performance.now();
       if(relativeVelocity>=0 || now-(lastCollisions.get(key)||0)<=collisionCooldown) return;
       const overlap=minDistance-distance, collisionX=(a.x+b.x+size)/2, collisionY=(a.y+b.y+size)/2;
       a.x-=nx*overlap/2; a.y-=ny*overlap/2; b.x+=nx*overlap/2; b.y+=ny*overlap/2;
