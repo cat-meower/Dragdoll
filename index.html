@@ -16,11 +16,32 @@ body{background:#fff;font-family:"Comic Sans MS","Comic Sans",cursive}
 #play{pointer-events:auto;border:0;border-radius:16px;padding:15px 58px;font-size:25px;font-weight:800;color:#fff;background:#25d34f;box-shadow:0 7px 0 #159b36,0 12px 28px rgba(37,211,79,.3);cursor:pointer;transition:transform .12s,box-shadow .12s}
 #play:hover{transform:translateY(-2px);box-shadow:0 9px 0 #159b36,0 15px 32px rgba(37,211,79,.35)}
 #play:active{transform:translateY(5px);box-shadow:0 2px 0 #159b36,0 5px 15px rgba(37,211,79,.25)}
+#game-screen{position:fixed;inset:0;background:#87ceeb;display:none;overflow:hidden}
+#game-screen::after{content:"";position:absolute;left:0;right:0;bottom:0;height:110px;background:#65b84f;border-top:6px solid #4d943b}
+#ragdoll{position:absolute;left:50%;top:45%;width:150px;height:300px;transform:translate(-50%,-50%);z-index:2}
+.part{position:absolute;box-sizing:border-box}
+.head{width:70px;height:70px;left:40px;top:0;background:#f5c58b;border:3px solid #d59b62}
+.torso{width:90px;height:105px;left:30px;top:75px;background:#1f7ee8;border:3px solid #1559a5}
+.arm{width:32px;height:105px;top:78px;background:#f5c58b;border:3px solid #d59b62}
+.arm.left{left:0}.arm.right{right:0}
+.leg{width:38px;height:115px;top:180px;background:#2867c7;border:3px solid #19468c}
+.leg.left{left:28px}.leg.right{right:28px}
+.face-eye{width:9px;height:11px;background:#111;top:24px;border-radius:2px}.face-eye.left{left:18px}.face-eye.right{right:18px}
+.face-mouth{width:28px;height:10px;left:21px;top:45px;border-bottom:4px solid #111;border-radius:0 0 50% 50%}
+#game-screen.playing{display:block}
 </style>
 </head>
 <body>
 <div id="balls"></div>
 <div id="title-screen"><h1 id="title">Dragdoll</h1><button id="play">PLAY</button></div>
+<div id="game-screen">
+  <div id="ragdoll">
+    <div class="part head"><div class="part face-eye left"></div><div class="part face-eye right"></div><div class="part face-mouth"></div></div>
+    <div class="part torso"></div>
+    <div class="part arm left"></div><div class="part arm right"></div>
+    <div class="part leg left"></div><div class="part leg right"></div>
+  </div>
+</div>
 <script>
 const ballsContainer=document.getElementById('balls'),size=110,gap=10,ballTypes=['red','orange','yellow','green','blue','indigo','pink'];
 function makeBall(type,index){const b=document.createElement('div');b.className=`sphere ${type}`;b.id=`${type}Sphere${index+1}`;const l=document.createElement('div');l.className='eye left';const r=document.createElement('div');r.className='eye right';const m=document.createElement('div');m.className=`mouth ${{red:'smile-big',orange:'smile',yellow:'smile-small',green:'smile',blue:'smile-small',indigo:'smile',pink:'smile-big'}[type]}`;b.append(l,r,m);ballsContainer.appendChild(b);return b}
@@ -30,6 +51,9 @@ const balls=[],used=[];for(let i=0;i<ballTypes.length;i++){const type=ballTypes[
 function handleCollision(a,b){const cx=(b.x+size/2)-(a.x+size/2),cy=(b.y+size/2)-(a.y+size/2),d=Math.hypot(cx,cy);if(d===0||d>=size)return;const nx=cx/d,ny=cy/d,rv=(b.dx-a.dx)*nx+(b.dy-a.dy)*ny;if(rv>=0)return;const overlap=size-d;a.x-=nx*overlap/2;a.y-=ny*overlap/2;b.x+=nx*overlap/2;b.y+=ny*overlap/2;const odx=a.dx,ody=a.dy;a.dx=b.dx;a.dy=b.dy;b.dx=odx;b.dy=ody}
 function move(){const maxX=Math.max(0,innerWidth-size),maxY=Math.max(0,innerHeight-size);for(const b of balls){b.x+=b.dx;b.y+=b.dy;if(b.x<=0||b.x>=maxX){b.x=Math.max(0,Math.min(b.x,maxX));b.dx*=-1}if(b.y<=0||b.y>=maxY){b.y=Math.max(0,Math.min(b.y,maxY));b.dy*=-1}}for(let i=0;i<balls.length;i++)for(let j=i+1;j<balls.length;j++)handleCollision(balls[i],balls[j]);for(const b of balls){b.element.style.left=b.x+'px';b.element.style.top=b.y+'px'}requestAnimationFrame(move)}
 move();
+
+const play=document.getElementById('play'),titleScreen=document.getElementById('title-screen'),gameScreen=document.getElementById('game-screen');
+play.addEventListener('pointerup',()=>{titleScreen.remove();ballsContainer.innerHTML='';gameScreen.classList.add('playing')});
 </script>
 </body>
 </html>
