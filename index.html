@@ -26,9 +26,74 @@
       background: radial-gradient(circle at 32% 28%, #ff7777 0%, #e00000 42%, #8b0000 100%);
       box-shadow: 6px 8px 14px rgba(0, 0, 0, 0.25);
     }
+
+    .eye {
+      position: absolute;
+      top: 30px;
+      width: 12px;
+      height: 16px;
+      background: #111;
+      border-radius: 50%;
+    }
+
+    .eye.left {
+      left: 28px;
+    }
+
+    .eye.right {
+      right: 28px;
+    }
+
+    .mouth {
+      position: absolute;
+      left: 30px;
+      top: 51px;
+      width: 40px;
+      height: 20px;
+      border-bottom: 5px solid #111;
+      border-radius: 0 0 50% 50%;
+    }
   </style>
 </head>
 <body>
-  <div class="sphere" aria-label="Red sphere"></div>
+  <div class="sphere" aria-label="Smiling red sphere">
+    <div class="eye left"></div>
+    <div class="eye right"></div>
+    <div class="mouth"></div>
+  </div>
+
+  <script>
+    const sphere = document.querySelector('.sphere');
+    let x = 24;
+    let y = 24;
+    let dx = 2.5;
+    let dy = 2;
+    const size = 100;
+
+    function moveSphere() {
+      const maxX = window.innerWidth - size;
+      const maxY = window.innerHeight - size;
+
+      x += dx;
+      y += dy;
+
+      if (x <= 0 || x >= maxX) {
+        dx *= -1;
+        x = Math.max(0, Math.min(x, maxX));
+      }
+
+      if (y <= 0 || y >= maxY) {
+        dy *= -1;
+        y = Math.max(0, Math.min(y, maxY));
+      }
+
+      sphere.style.left = x + 'px';
+      sphere.style.top = y + 'px';
+
+      requestAnimationFrame(moveSphere);
+    }
+
+    moveSphere();
+  </script>
 </body>
 </html>
