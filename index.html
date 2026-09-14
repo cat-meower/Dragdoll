@@ -3,31 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Red Sphere</title>
+  <title>Red and Blue Balls</title>
   <style>
     html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
     body { background: white; }
     .sphere {
-      position: absolute; top: 24px; left: 24px; width: 100px; height: 100px;
+      position: absolute; width: 100px; height: 100px;
       border-radius: 50%;
-      background: radial-gradient(circle at 32% 28%, #ff7777 0%, #e00000 42%, #8b0000 100%);
       box-shadow: 6px 8px 14px rgba(0, 0, 0, 0.25); z-index: 2;
     }
+    .red { background: radial-gradient(circle at 32% 28%, #ff7777 0%, #e00000 42%, #8b0000 100%); }
+    .blue { background: radial-gradient(circle at 32% 28%, #77bbff 0%, #0066dd 42%, #003b80 100%); }
     .eye { position: absolute; top: 30px; width: 12px; height: 16px; background: #111; border-radius: 50%; }
     .eye.left { left: 28px; } .eye.right { right: 28px; }
-    .mouth { position: absolute; left: 30px; top: 51px; width: 40px; height: 20px; border-bottom: 5px solid #111; border-radius: 0 0 50% 50%; }
+    .mouth { position: absolute; left: 30px; width: 40px; height: 20px; border-radius: 50%; }
+    .smile { top: 51px; border-bottom: 5px solid #111; }
+    .frown { top: 59px; border-top: 5px solid #111; }
     .confetti {
       position: fixed; width: 7px; height: 12px; pointer-events: none; z-index: 1;
       animation: confetti-fly 900ms cubic-bezier(.15,.7,.3,1) forwards;
     }
     .mammott-pop {
-      position: fixed;
-      width: 90px;
-      height: 90px;
-      object-fit: contain;
-      pointer-events: none;
-      z-index: 1;
-      opacity: 0;
+      position: fixed; width: 90px; height: 90px; object-fit: contain;
+      pointer-events: none; z-index: 1; opacity: 0;
       animation: mammott-fade 1000ms ease-out forwards;
       transform: translate(-50%, -50%);
     }
@@ -43,25 +41,58 @@
   </style>
 </head>
 <body>
-  <div class="sphere" aria-label="Smiling red sphere">
-    <div class="eye left"></div><div class="eye right"></div><div class="mouth"></div>
+  <div class="sphere red" id="redSphere" aria-label="Smiling red sphere">
+    <div class="eye left"></div><div class="eye right"></div><div class="mouth smile"></div>
+  </div>
+  <div class="sphere blue" id="blueSphere" aria-label="Frowning blue sphere">
+    <div class="eye left"></div><div class="eye right"></div><div class="mouth frown"></div>
   </div>
   <audio id="bounceSound" preload="auto">
     <source src="Mammott_Memory_Sample.mp3.mpeg" type="audio/mpeg">
   </audio>
+  <audio id="collisionSound" preload="auto">
+    <source src="Mammott_Memory_Sample.mp3.mpeg" type="audio/mpeg">
+  </audio>
   <script>
-    const sphere = document.querySelector('.sphere');
+    const redSphere = document.getElementById('redSphere');
+    const blueSphere = document.getElementById('blueSphere');
     const bounceSound = document.getElementById('bounceSound');
+    const collisionSound = document.getElementById('collisionSound');
     const size = 100;
-    let x = Math.random() * Math.max(0, window.innerWidth - size);
-    let y = Math.random() * Math.max(0, window.innerHeight - size);
-    let dx = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 1.5);
-    let dy = (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 1.5);
-    sphere.style.left = x + 'px'; sphere.style.top = y + 'px';
+    const gap = 12;
+    const collisionCooldown = 350;
 
-    function playBounceSound() {
-      bounceSound.currentTime = 0;
-      bounceSound.play().catch(() => {});
+    function randomPosition(existingX, existingY) {
+      let px, py;
+      for (let i = 0; i < 100; i++) {
+        px = Math.random() * Math.max(0, window.innerWidth - size);
+        py = Math.random() * Math.max(0, window.innerHeight - size);
+        if (existingX === null || Math.hypot(px - existingX, py - existingY) >= size + gap) return [px, py];
+      }
+      return [Math.max(0, Math.min(px, window.innerWidth - size)), Math.max(0, Math.min(py, window.innerHeight - size))];
+    }
+
+    let [redX, redY] = randomPosition(null, null);
+    let [blueX, blueY] = randomPosition(redX, redY);
+    let redDX = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 1.5);
+    let redDY = (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 1.5);
+    let blueDX = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 1.5);
+    let blueDY = (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 1.5);
+    let lastCollision = 0;
+
+    redSphere.style.left = redX + 'px'; redSphere.style.top = redY + 'px';
+    blueSphere.style.left = blueX + 'px'; blueSphere.style.top = blueY + 'px';
+
+    function playSound(audio) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
+
+    function playCollisionSound() {
+      collisionSound.currentTime = 0;
+      collisionSound.playbackRate = 0.72;
+      collisionSound.volume = 1;
+      collisionSound.play().catch(() => {});
     }
 
     function mammottBurst(edgeX, edgeY) {
@@ -99,26 +130,62 @@
       }
     }
 
-    function moveSphere() {
+    function edgeEffects(x, y, dx, dy) {
+      playSound(bounceSound);
+      mammottBurst(x + size / 2, y + size / 2);
+      confettiBurst(x + size / 2, y + size / 2, dx, dy);
+    }
+
+    function move() {
       const maxX = Math.max(0, window.innerWidth - size);
       const maxY = Math.max(0, window.innerHeight - size);
-      x += dx; y += dy;
-      if (x <= 0 || x >= maxX) {
-        x = Math.max(0, Math.min(x, maxX)); dx *= -1;
-        playBounceSound();
-        mammottBurst(x + size / 2, y + size / 2);
-        confettiBurst(x + size / 2, y + size / 2, dx > 0 ? 1 : -1, 0);
+      redX += redDX; redY += redDY;
+      blueX += blueDX; blueY += blueDY;
+
+      if (redX <= 0 || redX >= maxX) {
+        redX = Math.max(0, Math.min(redX, maxX)); redDX *= -1;
+        edgeEffects(redX, redY, redDX > 0 ? 1 : -1, 0);
       }
-      if (y <= 0 || y >= maxY) {
-        y = Math.max(0, Math.min(y, maxY)); dy *= -1;
-        playBounceSound();
-        mammottBurst(x + size / 2, y + size / 2);
-        confettiBurst(x + size / 2, y + size / 2, 0, dy > 0 ? 1 : -1);
+      if (redY <= 0 || redY >= maxY) {
+        redY = Math.max(0, Math.min(redY, maxY)); redDY *= -1;
+        edgeEffects(redX, redY, 0, redDY > 0 ? 1 : -1);
       }
-      sphere.style.left = x + 'px'; sphere.style.top = y + 'px';
-      requestAnimationFrame(moveSphere);
+      if (blueX <= 0 || blueX >= maxX) {
+        blueX = Math.max(0, Math.min(blueX, maxX)); blueDX *= -1;
+        edgeEffects(blueX, blueY, blueDX > 0 ? 1 : -1, 0);
+      }
+      if (blueY <= 0 || blueY >= maxY) {
+        blueY = Math.max(0, Math.min(blueY, maxY)); blueDY *= -1;
+        edgeEffects(blueX, blueY, 0, blueDY > 0 ? 1 : -1);
+      }
+
+      const centerDX = (blueX + size / 2) - (redX + size / 2);
+      const centerDY = (blueY + size / 2) - (redY + size / 2);
+      const distance = Math.hypot(centerDX, centerDY);
+      const minDistance = size;
+      if (distance < minDistance && distance > 0) {
+        const nx = centerDX / distance;
+        const ny = centerDY / distance;
+        const relativeVelocity = (blueDX - redDX) * nx + (blueDY - redDY) * ny;
+        if (relativeVelocity < 0 && performance.now() - lastCollision > collisionCooldown) {
+          const overlap = minDistance - distance;
+          redX -= nx * overlap / 2; redY -= ny * overlap / 2;
+          blueX += nx * overlap / 2; blueY += ny * overlap / 2;
+
+          const oldRedDX = redDX, oldRedDY = redDY;
+          redDX = blueDX; redDY = blueDY;
+          blueDX = oldRedDX; blueDY = oldRedDY;
+
+          lastCollision = performance.now();
+          playCollisionSound();
+        }
+      }
+
+      redSphere.style.left = redX + 'px'; redSphere.style.top = redY + 'px';
+      blueSphere.style.left = blueX + 'px'; blueSphere.style.top = blueY + 'px';
+      requestAnimationFrame(move);
     }
-    moveSphere();
+    move();
   </script>
 </body>
 </html>
