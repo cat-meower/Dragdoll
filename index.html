@@ -25,6 +25,7 @@
       border-radius: 50%;
       background: radial-gradient(circle at 32% 28%, #ff7777 0%, #e00000 42%, #8b0000 100%);
       box-shadow: 6px 8px 14px rgba(0, 0, 0, 0.25);
+      z-index: 2;
     }
 
     .eye {
@@ -36,13 +37,8 @@
       border-radius: 50%;
     }
 
-    .eye.left {
-      left: 28px;
-    }
-
-    .eye.right {
-      right: 28px;
-    }
+    .eye.left { left: 28px; }
+    .eye.right { right: 28px; }
 
     .mouth {
       position: absolute;
@@ -52,6 +48,26 @@
       height: 20px;
       border-bottom: 5px solid #111;
       border-radius: 0 0 50% 50%;
+    }
+
+    .confetti {
+      position: fixed;
+      width: 7px;
+      height: 12px;
+      pointer-events: none;
+      z-index: 1;
+      animation: confetti-fly 700ms ease-out forwards;
+    }
+
+    @keyframes confetti-fly {
+      0% {
+        transform: translate(0, 0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--dx), var(--dy)) rotate(var(--rotation));
+        opacity: 0;
+      }
     }
   </style>
 </head>
@@ -70,21 +86,48 @@
     let dy = 2;
     const size = 100;
 
+    function confettiBurst(edgeX, edgeY, directionX, directionY) {
+      const colors = ['#ff0000', '#00aaff', '#ffd400', '#22bb55', '#aa44ff', '#ff66aa'];
+      const count = 24;
+
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.left = edgeX + 'px';
+        piece.style.top = edgeY + 'px';
+
+        const spread = (Math.random() - 0.5) * 180;
+        const outward = 40 + Math.random() * 100;
+        const finalX = directionX * outward + (directionX === 0 ? spread : spread * 0.35);
+        const finalY = directionY * outward + (directionY === 0 ? spread : spread * 0.35);
+
+        piece.style.setProperty('--dx', finalX + 'px');
+        piece.style.setProperty('--dy', finalY + 'px');
+        piece.style.setProperty('--rotation', (Math.random() * 720 - 360) + 'deg');
+        document.body.appendChild(piece);
+
+        setTimeout(() => piece.remove(), 750);
+      }
+    }
+
     function moveSphere() {
-      const maxX = window.innerWidth - size;
-      const maxY = window.innerHeight - size;
+      const maxX = Math.max(0, window.innerWidth - size);
+      const maxY = Math.max(0, window.innerHeight - size);
 
       x += dx;
       y += dy;
 
       if (x <= 0 || x >= maxX) {
-        dx *= -1;
         x = Math.max(0, Math.min(x, maxX));
+        dx *= -1;
+        confettiBurst(x + size / 2, y + size / 2, dx > 0 ? 1 : -1, 0);
       }
 
       if (y <= 0 || y >= maxY) {
-        dy *= -1;
         y = Math.max(0, Math.min(y, maxY));
+        dy *= -1;
+        confettiBurst(x + size / 2, y + size / 2, 0, dy > 0 ? 1 : -1);
       }
 
       sphere.style.left = x + 'px';
