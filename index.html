@@ -80,11 +80,16 @@
 
   <script>
     const sphere = document.querySelector('.sphere');
-    let x = 24;
-    let y = 24;
-    let dx = 2.5;
-    let dy = 2;
     const size = 100;
+
+    // Pick a fresh random starting position every time the page loads.
+    let x = Math.random() * Math.max(0, window.innerWidth - size);
+    let y = Math.random() * Math.max(0, window.innerHeight - size);
+    let dx = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 1.5);
+    let dy = (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 1.5);
+
+    sphere.style.left = x + 'px';
+    sphere.style.top = y + 'px';
 
     function confettiBurst(edgeX, edgeY, directionX, directionY) {
       const colors = ['#ff0000', '#00aaff', '#ffd400', '#22bb55', '#aa44ff', '#ff66aa'];
