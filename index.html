@@ -18,15 +18,14 @@ body{background:#fff;font-family:"Comic Sans MS","Comic Sans",cursive}
 #play:active{transform:translateY(5px);box-shadow:0 2px 0 #111,0 5px 15px rgba(37,211,79,.25)}
 #game-screen{position:fixed;inset:0;background:#87ceeb;display:none;overflow:hidden}
 #game-screen::after{content:"";position:absolute;left:0;right:0;bottom:0;height:110px;background:#65b84f;border-top:6px solid #4d943b;z-index:0}
-#ragdoll{position:absolute;left:0;top:0;width:120px;height:235px;z-index:2;user-select:none;touch-action:none}
+#ragdoll{position:absolute;left:0;top:0;width:100%;height:100%;z-index:2;user-select:none;touch-action:none}
 .part{position:absolute;box-sizing:border-box;will-change:transform,left,top}
-.head{width:46px;height:46px;background:#ffd84a;border:3px solid #b99316;border-radius:2px}
-.torso{width:58px;height:68px;background:#2087e8;border:3px solid #1559a5}
+.head{width:46px;height:46px;background:#ffd84a;border:3px solid #b99316;border-radius:2px;transform-origin:50% 50%}
+.torso{width:58px;height:68px;background:#2087e8;border:3px solid #1559a5;transform-origin:50% 50%}
 .limb{width:29px;height:58px;background:#ffd84a;border:3px solid #b99316;border-radius:2px;transform-origin:50% 0}
 .leg{width:29px;height:58px;background:#28b84b;border:3px solid #197b32;border-radius:2px;transform-origin:50% 0}
 .face-eye{width:6px;height:8px;background:#111;top:14px;border-radius:1px;position:absolute}.face-eye.left{left:11px}.face-eye.right{right:11px}
 .face-mouth{width:19px;height:7px;left:11px;top:28px;border-bottom:3px solid #111;border-radius:0 0 50% 50%;position:absolute}
-.joint{position:absolute;width:10px;height:10px;background:#333;border-radius:50%;z-index:5;transform:translate(-50%,-50%)}
 #game-screen.playing{display:block}
 </style>
 </head>
@@ -55,45 +54,68 @@ const play=document.getElementById('play'),titleScreen=document.getElementById('
 play.addEventListener('pointerup',()=>{titleScreen.remove();ballsContainer.innerHTML='';gameScreen.classList.add('playing');initRagdoll()});
 
 const rag=document.getElementById('ragdoll'),parts={head:document.getElementById('head'),torso:document.getElementById('torso'),armL:document.getElementById('armL'),armR:document.getElementById('armR'),legL:document.getElementById('legL'),legR:document.getElementById('legR')};
+const HEAD_W=46,HEAD_H=46,TORSO_W=58,TORSO_H=68,LIMB_W=29,LIMB_H=58;
 let points,grabbed=null,grabOffset={x:0,y:0};
 function initRagdoll(){
-  const cx=innerWidth/2, top=100;
+  const cx=innerWidth/2,top=100;
   points={
-    head:{x:cx,y:top,px:cx,py:top},
-    torso:{x:cx,y:top+46,px:cx,py:top+46},
-    armL:{x:cx-14.5,y:top+54,px:cx-14.5,py:top+54},
-    armR:{x:cx+14.5,y:top+54,px:cx+14.5,py:top+54},
-    legL:{x:cx-14.5,y:top+114,px:cx-14.5,py:top+114},
-    legR:{x:cx+14.5,y:top+114,px:cx+14.5,py:top+114}
+    head:{x:cx-HEAD_W/2,y:top,px:cx-HEAD_W/2,py:top},
+    torso:{x:cx-TORSO_W/2,y:top+46,px:cx-TORSO_W/2,py:top+46},
+    armL:{x:cx-TORSO_W/2-LIMB_W/2,y:top+54,px:cx-TORSO_W/2-LIMB_W/2,py:top+54},
+    armR:{x:cx+TORSO_W/2-LIMB_W/2,y:top+54,px:cx+TORSO_W/2-LIMB_W/2,py:top+54},
+    legL:{x:cx-TORSO_W/4-LIMB_W/2,y:top+TORSO_H,px:cx-TORSO_W/4-LIMB_W/2,py:top+TORSO_H},
+    legR:{x:cx+TORSO_W/4-LIMB_W/2,y:top+TORSO_H,px:cx+TORSO_W/4-LIMB_W/2,py:top+TORSO_H}
   };
-  rag.style.left='0';rag.style.top='0';rag.style.transform='none';
   requestAnimationFrame(ragdollLoop);
 }
-function constrain(a,b,ax,ay,bx,by,len){const A=points[a],B=points[b];let x=(B.x+bx)-(A.x+ax),y=(B.y+by)-(A.y+ay),d=Math.hypot(x,y)||1,diff=(d-len)/d*0.5;x*=diff;y*=diff;A.x+=x;A.y+=y;B.x-=x;B.y-=y}
-function setPart(el,p,x,y,angle){el.style.left=(p.x+x)+'px';el.style.top=(p.y+y)+'px';el.style.transform=`rotate(${angle}rad)`}
+function constrain(a,b,ax,ay,bx,by,len){const A=points[a],B=points[b];let x=(B.x+bx)-(A.x+ax),y=(B.y+by)-(A.y+ay),d=Math.hypot(x,y)||1,diff=(d-len)/d*.5;x*=diff;y*=diff;A.x+=x;A.y+=y;B.x-=x;B.y-=y}
+function setPart(el,x,y,angle){el.style.left=x+'px';el.style.top=y+'px';el.style.transform=`rotate(${angle}rad)`}
+function edgeBounce(p,w,h){
+  const minX=0,maxX=innerWidth-w,minY=0,maxY=innerHeight-110-h;
+  if(p.x<minX){p.x=minX;if(p.px>p.x)p.px=p.x+(p.x-p.px)*-0.65}
+  if(p.x>maxX){p.x=maxX;if(p.px<p.x)p.px=p.x+(p.x-p.px)*-0.65}
+  if(p.y<minY){p.y=minY;if(p.py>p.y)p.py=p.y+(p.y-p.py)*-0.65}
+  if(p.y>maxY){p.y=maxY;if(p.py<p.y)p.py=p.y+(p.y-p.py)*-0.65}
+}
 function ragdollLoop(){
   const gravity=.38,damp=.995;
-  for(const p of Object.values(points)){if(grabbed===p)continue;const vx=(p.x-p.px)*damp,vy=(p.y-p.py)*damp;p.px=p.x;p.py=p.y;p.x+=vx;p.y+=vy+gravity}
-  for(let k=0;k<6;k++){
-    constrain('head','torso',0,46,0,0,0);
+  for(const p of Object.values(points)){
+    if(grabbed===p)continue;
+    const vx=(p.x-p.px)*damp,vy=(p.y-p.py)*damp;
+    p.px=p.x;p.py=p.y;p.x+=vx;p.y+=vy+gravity;
+  }
+  for(let k=0;k<8;k++){
+    constrain('head','torso',23,46,29,0,0);
     constrain('torso','armL',0,8,14.5,0,0);
     constrain('torso','armR',58,8,14.5,0,0);
     constrain('torso','legL',14.5,68,14.5,0,0);
     constrain('torso','legR',43.5,68,14.5,0,0);
   }
-  const floor=innerHeight-110;
-  for(const [name,p] of Object.entries(points)){const bottom=name==='head'?46:name==='torso'?68:58;if(p.y+bottom>floor){p.y=floor-bottom;p.py=p.y}}
-  const H=points.head,T=points.torso,AL=points.armL,AR=points.armR,LL=points.legL,LR=points.legR;
-  setPart(parts.head,H,0,0,0);
-  setPart(parts.torso,T,0,0,0);
-  setPart(parts.armL,AL,-14.5,0,Math.atan2((AL.y-T.y),(AL.x-(T.x+14.5))));
-  setPart(parts.armR,AR,-14.5,0,Math.atan2((AR.y-T.y),(AR.x-(T.x+43.5))));
-  setPart(parts.legL,LL,-14.5,0,Math.atan2((LL.y-(T.y+68)),(LL.x-(T.x+14.5))));
-  setPart(parts.legR,LR,-14.5,0,Math.atan2((LR.y-(T.y+68)),(LR.x-(T.x+43.5))));
+  edgeBounce(points.head,HEAD_W,HEAD_H);
+  edgeBounce(points.torso,TORSO_W,TORSO_H);
+  edgeBounce(points.armL,LIMB_W,LIMB_H);
+  edgeBounce(points.armR,LIMB_W,LIMB_H);
+  edgeBounce(points.legL,LIMB_W,LIMB_H);
+  edgeBounce(points.legR,LIMB_W,LIMB_H);
+
+  const T=points.torso;
+  setPart(parts.head,points.head.x,points.head.y,0);
+  setPart(parts.torso,T.x,T.y,0);
+  const shoulderL={x:T.x,y:T.y+8},shoulderR={x:T.x+TORSO_W,y:T.y+8};
+  const hipL={x:T.x+14.5,y:T.y+TORSO_H},hipR={x:T.x+43.5,y:T.y+TORSO_H};
+  const AL=points.armL,AR=points.armR,LL=points.legL,LR=points.legR;
+  const aL=Math.atan2(AL.y-shoulderL.y,AL.x+LIMB_W/2-shoulderL.x);
+  const aR=Math.atan2(AR.y-shoulderR.y,AR.x+LIMB_W/2-shoulderR.x);
+  const lL=Math.atan2(LL.y-hipL.y,LL.x+LIMB_W/2-hipL.x);
+  const lR=Math.atan2(LR.y-hipR.y,LR.x+LIMB_W/2-hipR.x);
+  setPart(parts.armL,AL.x,AL.y,aL);
+  setPart(parts.armR,AR.x,AR.y,aR);
+  setPart(parts.legL,LL.x,LL.y,lL);
+  setPart(parts.legR,LR.x,LR.y,lR);
   requestAnimationFrame(ragdollLoop);
 }
 function pointerPos(e){return{x:e.clientX,y:e.clientY}}
-rag.addEventListener('pointerdown',e=>{const q=pointerPos(e);let best=null,bd=60;for(const p of Object.values(points)){const d=Math.hypot(p.x-q.x,p.y-q.y);if(d<bd){bd=d;best=p}}if(best){grabbed=best;grabOffset.x=best.x-q.x;grabOffset.y=best.y-q.y;rag.setPointerCapture(e.pointerId)}});
+rag.addEventListener('pointerdown',e=>{const q=pointerPos(e);let best=null,bd=65;for(const p of Object.values(points)){const d=Math.hypot(p.x+15-q.x,p.y+15-q.y);if(d<bd){bd=d;best=p}}if(best){grabbed=best;grabOffset.x=best.x-q.x;grabOffset.y=best.y-q.y;rag.setPointerCapture(e.pointerId)}});
 rag.addEventListener('pointermove',e=>{if(!grabbed)return;const q=pointerPos(e);grabbed.px=grabbed.x=q.x+grabOffset.x;grabbed.py=grabbed.y=q.y+grabOffset.y});
 rag.addEventListener('pointerup',e=>{grabbed=null;try{rag.releasePointerCapture(e.pointerId)}catch{}});
 rag.addEventListener('pointercancel',()=>{grabbed=null});
