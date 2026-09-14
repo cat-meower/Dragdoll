@@ -30,14 +30,23 @@
   <div class="sphere" aria-label="Smiling red sphere">
     <div class="eye left"></div><div class="eye right"></div><div class="mouth"></div>
   </div>
+  <audio id="bounceSound" preload="auto">
+    <source src="Mammott_Memory_Sample.mp3.mpeg" type="audio/mpeg">
+  </audio>
   <script>
     const sphere = document.querySelector('.sphere');
+    const bounceSound = document.getElementById('bounceSound');
     const size = 100;
     let x = Math.random() * Math.max(0, window.innerWidth - size);
     let y = Math.random() * Math.max(0, window.innerHeight - size);
     let dx = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 1.5);
     let dy = (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 1.5);
     sphere.style.left = x + 'px'; sphere.style.top = y + 'px';
+
+    function playBounceSound() {
+      bounceSound.currentTime = 0;
+      bounceSound.play().catch(() => {});
+    }
 
     function confettiBurst(edgeX, edgeY, directionX, directionY) {
       const colors = ['#ff0000','#00aaff','#ffd400','#22bb55','#aa44ff','#ff66aa','#ff7a00','#00dddd','#ff33cc'];
@@ -69,10 +78,12 @@
       x += dx; y += dy;
       if (x <= 0 || x >= maxX) {
         x = Math.max(0, Math.min(x, maxX)); dx *= -1;
+        playBounceSound();
         confettiBurst(x + size / 2, y + size / 2, dx > 0 ? 1 : -1, 0);
       }
       if (y <= 0 || y >= maxY) {
         y = Math.max(0, Math.min(y, maxY)); dy *= -1;
+        playBounceSound();
         confettiBurst(x + size / 2, y + size / 2, 0, dy > 0 ? 1 : -1);
       }
       sphere.style.left = x + 'px'; sphere.style.top = y + 'px';
