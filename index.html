@@ -68,23 +68,29 @@ function initRagdoll(){
   };
   requestAnimationFrame(ragdollLoop);
 }
-function constrain(a,b,ax,ay,bx,by,len){const A=points[a],B=points[b];let x=(B.x+bx)-(A.x+ax),y=(B.y+by)-(A.y+ay),d=Math.hypot(x,y)||1,diff=(d-len)/d*.5;x*=diff;y*=diff;A.x+=x;A.y+=y;B.x-=x;B.y-=y}
+function constrain(a,b,ax,ay,bx,by,len){
+  const A=points[a],B=points[b];
+  let x=(B.x+bx)-(A.x+ax),y=(B.y+by)-(A.y+ay),d=Math.hypot(x,y)||1;
+  const correction=Math.min(0.45,Math.max(-0.45,(d-len)/d*0.28));
+  x*=correction;y*=correction;
+  A.x+=x;A.y+=y;B.x-=x;B.y-=y;
+}
 function setPart(el,x,y,angle){el.style.left=x+'px';el.style.top=y+'px';el.style.transform=`rotate(${angle}rad)`}
 function edgeBounce(p,w,h){
   const minX=0,maxX=innerWidth-w,minY=0,maxY=innerHeight-110-h;
-  if(p.x<minX){p.x=minX;if(p.px>p.x)p.px=p.x+(p.x-p.px)*-0.65}
-  if(p.x>maxX){p.x=maxX;if(p.px<p.x)p.px=p.x+(p.x-p.px)*-0.65}
-  if(p.y<minY){p.y=minY;if(p.py>p.y)p.py=p.y+(p.y-p.py)*-0.65}
-  if(p.y>maxY){p.y=maxY;if(p.py<p.y)p.py=p.y+(p.y-p.py)*-0.65}
+  if(p.x<minX){p.x=minX;p.px=p.x+(p.x-p.px)*-0.45}
+  if(p.x>maxX){p.x=maxX;p.px=p.x+(p.x-p.px)*-0.45}
+  if(p.y<minY){p.y=minY;p.py=p.y+(p.y-p.py)*-0.45}
+  if(p.y>maxY){p.y=maxY;p.py=p.y+(p.y-p.py)*-0.45}
 }
 function ragdollLoop(){
-  const gravity=.38,damp=.995;
+  const gravity=.22,damp=.985;
   for(const p of Object.values(points)){
     if(grabbed===p)continue;
     const vx=(p.x-p.px)*damp,vy=(p.y-p.py)*damp;
     p.px=p.x;p.py=p.y;p.x+=vx;p.y+=vy+gravity;
   }
-  for(let k=0;k<8;k++){
+  for(let k=0;k<3;k++){
     constrain('head','torso',23,46,29,0,0);
     constrain('torso','armL',0,8,14.5,0,0);
     constrain('torso','armR',58,8,14.5,0,0);
@@ -108,10 +114,7 @@ function ragdollLoop(){
   const aR=Math.atan2(AR.y-shoulderR.y,AR.x+LIMB_W/2-shoulderR.x);
   const lL=Math.atan2(LL.y-hipL.y,LL.x+LIMB_W/2-hipL.x);
   const lR=Math.atan2(LR.y-hipR.y,LR.x+LIMB_W/2-hipR.x);
-  setPart(parts.armL,AL.x,AL.y,aL);
-  setPart(parts.armR,AR.x,AR.y,aR);
-  setPart(parts.legL,LL.x,LL.y,lL);
-  setPart(parts.legR,LR.x,LR.y,lR);
+  setPart(parts.armL,AL.x,AL.y,aL);setPart(parts.armR,AR.x,AR.y,aR);setPart(parts.legL,LL.x,LL.y,lL);setPart(parts.legR,LR.x,LR.y,lR);
   requestAnimationFrame(ragdollLoop);
 }
 function pointerPos(e){return{x:e.clientX,y:e.clientY}}
