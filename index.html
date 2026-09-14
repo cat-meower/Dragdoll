@@ -3,22 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Red and Blue Balls</title>
+  <title>Red, Blue and Yellow Balls</title>
   <style>
     html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
     body { background: white; }
     .sphere {
-      position: absolute; width: 100px; height: 100px;
+      position: absolute; width: 104px; height: 104px;
       border-radius: 50%;
       box-shadow: 6px 8px 14px rgba(0, 0, 0, 0.25); z-index: 2;
     }
     .red { background: radial-gradient(circle at 32% 28%, #ff7777 0%, #e00000 42%, #8b0000 100%); }
     .blue { background: radial-gradient(circle at 32% 28%, #77bbff 0%, #0066dd 42%, #003b80 100%); }
-    .eye { position: absolute; top: 30px; width: 12px; height: 16px; background: #111; border-radius: 50%; }
-    .eye.left { left: 28px; } .eye.right { right: 28px; }
-    .mouth { position: absolute; left: 30px; width: 40px; height: 20px; border-radius: 50%; }
-    .smile { top: 51px; border-bottom: 5px solid #111; }
-    .frown { top: 59px; border-top: 5px solid #111; }
+    .yellow { background: radial-gradient(circle at 32% 28%, #fff477 0%, #ffd400 42%, #c99d00 100%); }
+    .eye { position: absolute; top: 31px; width: 12px; height: 16px; background: #111; border-radius: 50%; }
+    .eye.left { left: 30px; } .eye.right { right: 30px; }
+    .mouth { position: absolute; left: 31px; width: 42px; height: 20px; }
+    .smile { top: 53px; border-bottom: 5px solid #111; border-radius: 50%; }
+    .frown { top: 61px; border-top: 5px solid #111; border-radius: 50%; }
+    .straight { top: 61px; height: 5px; background: #111; border-radius: 0; }
     .confetti {
       position: fixed; width: 7px; height: 12px; pointer-events: none; z-index: 1;
       animation: confetti-fly 900ms cubic-bezier(.15,.7,.3,1) forwards;
@@ -29,16 +31,16 @@
       animation: mammott-fade 1000ms ease-out forwards;
       transform: translate(-50%, -50%);
     }
-    .purple-explosion {
+    .collision-explosion {
       position: fixed;
       width: 34px; height: 34px;
       border-radius: 50%;
       pointer-events: none;
       z-index: 3;
       transform: translate(-50%, -50%) scale(.2);
-      background: radial-gradient(circle, #ffffff 0%, #d88cff 18%, #8a2be2 45%, #4b0082 72%, transparent 100%);
-      box-shadow: 0 0 18px #9b4dff, 0 0 42px #7b1fff, 0 0 75px #5b00ff;
-      animation: hollow-purple 650ms cubic-bezier(.1,.8,.2,1) forwards;
+      background: radial-gradient(circle, #ffffff 0%, var(--light) 18%, var(--main) 48%, var(--dark) 74%, transparent 100%);
+      box-shadow: 0 0 18px var(--main), 0 0 42px var(--main), 0 0 75px var(--dark);
+      animation: collision-explosion 650ms cubic-bezier(.1,.8,.2,1) forwards;
     }
     @keyframes confetti-fly {
       0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
@@ -49,7 +51,7 @@
       15% { opacity: .45; transform: translate(-50%, -50%) scale(1); }
       100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
     }
-    @keyframes hollow-purple {
+    @keyframes collision-explosion {
       0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); filter: blur(2px); }
       18% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); filter: blur(0); }
       55% { opacity: .95; transform: translate(-50%, -50%) scale(2.7); }
@@ -64,14 +66,18 @@
   <div class="sphere blue" id="blueSphere" aria-label="Frowning blue sphere">
     <div class="eye left"></div><div class="eye right"></div><div class="mouth frown"></div>
   </div>
+  <div class="sphere yellow" id="yellowSphere" aria-label="Indifferent yellow sphere">
+    <div class="eye left"></div><div class="eye right"></div><div class="mouth straight"></div>
+  </div>
   <audio id="collisionSound" preload="auto">
     <source src="Mammott_Memory_Sample.mp3.mpeg" type="audio/mpeg">
   </audio>
   <script>
+    const collisionSound = document.getElementById('collisionSound');
     const redSphere = document.getElementById('redSphere');
     const blueSphere = document.getElementById('blueSphere');
-    const collisionSound = document.getElementById('collisionSound');
-    const size = 100;
+    const yellowSphere = document.getElementById('yellowSphere');
+    const size = 104;
     const gap = 12;
     const collisionCooldown = 350;
 
@@ -117,26 +123,41 @@
       source.start();
     }
 
-    function randomPosition(existingX, existingY) {
-      let px, py;
-      for (let i = 0; i < 100; i++) {
+    function randomPosition(existingPositions) {
+      let px = 0, py = 0;
+      for (let i = 0; i < 200; i++) {
         px = Math.random() * Math.max(0, window.innerWidth - size);
         py = Math.random() * Math.max(0, window.innerHeight - size);
-        if (existingX === null || Math.hypot(px - existingX, py - existingY) >= size + gap) return [px, py];
+        if (existingPositions.every(([x, y]) => Math.hypot(px - x, py - y) >= size + gap)) return [px, py];
       }
       return [Math.max(0, Math.min(px, window.innerWidth - size)), Math.max(0, Math.min(py, window.innerHeight - size))];
     }
 
-    let [redX, redY] = randomPosition(null, null);
-    let [blueX, blueY] = randomPosition(redX, redY);
-    let redDX = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 1.5);
-    let redDY = (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 1.5);
-    let blueDX = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 1.5);
-    let blueDY = (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 1.5);
-    let lastCollision = 0;
+    const red = { name: 'red', element: redSphere, x: 0, y: 0, dx: 0, dy: 0 };
+    const blue = { name: 'blue', element: blueSphere, x: 0, y: 0, dx: 0, dy: 0 };
+    const yellow = { name: 'yellow', element: yellowSphere, x: 0, y: 0, dx: 0, dy: 0 };
+    const balls = [red, blue, yellow];
 
-    redSphere.style.left = redX + 'px'; redSphere.style.top = redY + 'px';
-    blueSphere.style.left = blueX + 'px'; blueSphere.style.top = blueY + 'px';
+    [red.x, red.y] = randomPosition([]);
+    [blue.x, blue.y] = randomPosition([[red.x, red.y]]);
+    [yellow.x, yellow.y] = randomPosition([[red.x, red.y], [blue.x, blue.y]]);
+
+    function randomVelocity() {
+      return {
+        dx: (Math.random() < 0.5 ? -1 : 1) * (2.8 + Math.random() * 1.8),
+        dy: (Math.random() < 0.5 ? -1 : 1) * (2.2 + Math.random() * 1.8)
+      };
+    }
+
+    for (const ball of balls) {
+      const velocity = randomVelocity();
+      ball.dx = velocity.dx;
+      ball.dy = velocity.dy;
+      ball.element.style.left = ball.x + 'px';
+      ball.element.style.top = ball.y + 'px';
+    }
+
+    const lastCollisions = new Map();
 
     function playCollisionSound() {
       collisionSound.currentTime = 0;
@@ -163,7 +184,8 @@
         const piece = document.createElement('div');
         piece.className = 'confetti';
         piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-        piece.style.left = edgeX + 'px'; piece.style.top = edgeY + 'px';
+        piece.style.left = edgeX + 'px';
+        piece.style.top = edgeY + 'px';
         const angle = Math.random() * Math.PI * 2;
         const distance = 70 + Math.random() * 190;
         let finalX = Math.cos(angle) * distance;
@@ -180,77 +202,98 @@
       }
     }
 
-    function hollowPurpleExplosion(x, y) {
+    function collisionExplosion(x, y, type) {
+      const colors = {
+        orange: ['#ffffff', '#ffd0a0', '#ff7a00', '#b83b00'],
+        green: ['#ffffff', '#aaffbb', '#22bb55', '#087a32'],
+        purple: ['#ffffff', '#d88cff', '#8a2be2', '#4b0082']
+      };
+      const [light, main, mid, dark] = colors[type];
       const explosion = document.createElement('div');
-      explosion.className = 'purple-explosion';
+      explosion.className = 'collision-explosion';
+      explosion.style.setProperty('--light', light);
+      explosion.style.setProperty('--main', main);
+      explosion.style.setProperty('--dark', dark);
       explosion.style.left = x + 'px';
       explosion.style.top = y + 'px';
       document.body.appendChild(explosion);
       setTimeout(() => explosion.remove(), 700);
     }
 
-    function edgeEffects(x, y, dx, dy, reversed) {
-      if (reversed) {
+    function edgeEffects(ball, dx, dy) {
+      if (ball.name === 'blue') {
         playReversedBounceSound();
       } else {
         playNormalBounceSound();
       }
-      mammottBurst(x + size / 2, y + size / 2);
-      confettiBurst(x + size / 2, y + size / 2, dx, dy);
+      mammottBurst(ball.x + size / 2, ball.y + size / 2);
+      confettiBurst(ball.x + size / 2, ball.y + size / 2, dx, dy);
+    }
+
+    function handleCollision(a, b) {
+      const centerDX = (b.x + size / 2) - (a.x + size / 2);
+      const centerDY = (b.y + size / 2) - (a.y + size / 2);
+      const distance = Math.hypot(centerDX, centerDY);
+      const minDistance = size;
+      if (distance >= minDistance || distance === 0) return;
+
+      const nx = centerDX / distance;
+      const ny = centerDY / distance;
+      const relativeVelocity = (b.dx - a.dx) * nx + (b.dy - a.dy) * ny;
+      const key = [a.name, b.name].sort().join('-');
+      const now = performance.now();
+      if (relativeVelocity >= 0 || now - (lastCollisions.get(key) || 0) <= collisionCooldown) return;
+
+      const overlap = minDistance - distance;
+      const collisionX = (a.x + b.x + size) / 2;
+      const collisionY = (a.y + b.y + size) / 2;
+      a.x -= nx * overlap / 2;
+      a.y -= ny * overlap / 2;
+      b.x += nx * overlap / 2;
+      b.y += ny * overlap / 2;
+
+      const oldDX = a.dx, oldDY = a.dy;
+      a.dx = b.dx; a.dy = b.dy;
+      b.dx = oldDX; b.dy = oldDY;
+      lastCollisions.set(key, now);
+
+      playCollisionSound();
+      if (key === 'red-yellow') collisionExplosion(collisionX, collisionY, 'orange');
+      if (key === 'blue-yellow') collisionExplosion(collisionX, collisionY, 'green');
+      if (key === 'blue-red') collisionExplosion(collisionX, collisionY, 'purple');
     }
 
     function move() {
       const maxX = Math.max(0, window.innerWidth - size);
       const maxY = Math.max(0, window.innerHeight - size);
-      redX += redDX; redY += redDY;
-      blueX += blueDX; blueY += blueDY;
 
-      if (redX <= 0 || redX >= maxX) {
-        redX = Math.max(0, Math.min(redX, maxX)); redDX *= -1;
-        edgeEffects(redX, redY, redDX > 0 ? 1 : -1, 0, false);
-      }
-      if (redY <= 0 || redY >= maxY) {
-        redY = Math.max(0, Math.min(redY, maxY)); redDY *= -1;
-        edgeEffects(redX, redY, 0, redDY > 0 ? 1 : -1, false);
-      }
-      if (blueX <= 0 || blueX >= maxX) {
-        blueX = Math.max(0, Math.min(blueX, maxX)); blueDX *= -1;
-        edgeEffects(blueX, blueY, blueDX > 0 ? 1 : -1, 0, true);
-      }
-      if (blueY <= 0 || blueY >= maxY) {
-        blueY = Math.max(0, Math.min(blueY, maxY)); blueDY *= -1;
-        edgeEffects(blueX, blueY, 0, blueDY > 0 ? 1 : -1, true);
-      }
+      for (const ball of balls) {
+        ball.x += ball.dx;
+        ball.y += ball.dy;
 
-      const centerDX = (blueX + size / 2) - (redX + size / 2);
-      const centerDY = (blueY + size / 2) - (redY + size / 2);
-      const distance = Math.hypot(centerDX, centerDY);
-      const minDistance = size;
-      if (distance < minDistance && distance > 0) {
-        const nx = centerDX / distance;
-        const ny = centerDY / distance;
-        const relativeVelocity = (blueDX - redDX) * nx + (blueDY - redDY) * ny;
-        if (relativeVelocity < 0 && performance.now() - lastCollision > collisionCooldown) {
-          const overlap = minDistance - distance;
-          const collisionX = (redX + blueX + size) / 2;
-          const collisionY = (redY + blueY + size) / 2;
-          redX -= nx * overlap / 2; redY -= ny * overlap / 2;
-          blueX += nx * overlap / 2; blueY += ny * overlap / 2;
-
-          const oldRedDX = redDX, oldRedDY = redDY;
-          redDX = blueDX; redDY = blueDY;
-          blueDX = oldRedDX; blueDY = oldRedDY;
-
-          lastCollision = performance.now();
-          playCollisionSound();
-          hollowPurpleExplosion(collisionX, collisionY);
+        if (ball.x <= 0 || ball.x >= maxX) {
+          ball.x = Math.max(0, Math.min(ball.x, maxX));
+          ball.dx *= -1;
+          edgeEffects(ball, ball.dx > 0 ? 1 : -1, 0);
+        }
+        if (ball.y <= 0 || ball.y >= maxY) {
+          ball.y = Math.max(0, Math.min(ball.y, maxY));
+          ball.dy *= -1;
+          edgeEffects(ball, 0, ball.dy > 0 ? 1 : -1);
         }
       }
 
-      redSphere.style.left = redX + 'px'; redSphere.style.top = redY + 'px';
-      blueSphere.style.left = blueX + 'px'; blueSphere.style.top = blueY + 'px';
+      handleCollision(red, blue);
+      handleCollision(red, yellow);
+      handleCollision(blue, yellow);
+
+      for (const ball of balls) {
+        ball.element.style.left = ball.x + 'px';
+        ball.element.style.top = ball.y + 'px';
+      }
       requestAnimationFrame(move);
     }
+
     move();
   </script>
 </body>
