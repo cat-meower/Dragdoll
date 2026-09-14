@@ -51,7 +51,8 @@ function move(){const maxX=Math.max(0,innerWidth-size),maxY=Math.max(0,innerHeig
 move();
 
 const play=document.getElementById('play'),titleScreen=document.getElementById('title-screen'),gameScreen=document.getElementById('game-screen');
-play.addEventListener('pointerup',()=>{titleScreen.remove();ballsContainer.innerHTML='';gameScreen.classList.add('playing');initRagdoll()});
+const clickSound=new Audio('clickgame.mp3');
+play.addEventListener('pointerup',()=>{clickSound.currentTime=0;clickSound.play().catch(()=>{});titleScreen.remove();ballsContainer.innerHTML='';gameScreen.classList.add('playing');initRagdoll()});
 
 const rag=document.getElementById('ragdoll'),parts={head:document.getElementById('head'),torso:document.getElementById('torso'),armL:document.getElementById('armL'),armR:document.getElementById('armR'),legL:document.getElementById('legL'),legR:document.getElementById('legR')};
 const HEAD_W=40,HEAD_H=40,TORSO_W=50,TORSO_H=58,LIMB_W=25,LIMB_H=50,FLOOR_H=110;
