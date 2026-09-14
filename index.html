@@ -34,7 +34,7 @@
     const size = 90;
     const gap = 12;
     const collisionCooldown = 350;
-    const ballTypes = ['red','red','red','red','blue','blue','blue','blue','yellow','yellow','yellow','yellow'];
+    const ballTypes = Array(64).fill('red').concat(Array(64).fill('blue'), Array(64).fill('yellow'));
 
     let audioContext = null;
     let reversedBounceBuffer = null;
