@@ -68,13 +68,13 @@ function initRagdoll(){
   };
   requestAnimationFrame(ragdollLoop);
 }
-function constrain(a,b,ax,ay,bx,by,len){const A=points[a],B=points[b];let x=(B.x+bx)-(A.x+ax),y=(B.y+by)-(A.y+ay),d=Math.hypot(x,y)||1;const correction=Math.min(.45,Math.max(-.45,(d-len)/d*.28));x*=correction;y*=correction;A.x+=x;A.y+=y;B.x-=x;B.y-=y}
+function constrain(a,b,ax,ay,bx,by,len){const A=points[a],B=points[b];let x=(B.x+bx)-(A.x+ax),y=(B.y+by)-(A.y+ay),d=Math.hypot(x,y)||1;let correction=(d-len)/d*.18;correction=Math.max(-.28,Math.min(.28,correction));x*=correction;y*=correction;A.x+=x;A.y+=y;B.x-=x;B.y-=y;A.px+=x;A.py+=y;B.px-=x;B.py-=y}
 function setPart(el,x,y,angle){el.style.left=x+'px';el.style.top=y+'px';el.style.transform=`rotate(${angle}rad)`}
-function edgeBounce(p,w,h){const minX=0,maxX=innerWidth-w,minY=0,maxY=innerHeight-110-h;if(p.x<minX){p.x=minX;p.px=p.x+(p.x-p.px)*-.45}if(p.x>maxX){p.x=maxX;p.px=p.x+(p.x-p.px)*-.45}if(p.y<minY){p.y=minY;p.py=p.y+(p.y-p.py)*-.45}if(p.y>maxY){p.y=maxY;p.py=p.y+(p.y-p.py)*-.45}}
+function edgeBounce(p,w,h){const minX=0,maxX=innerWidth-w,minY=0,maxY=innerHeight-110-h;if(p.x<minX){p.x=minX;p.px=p.x+(p.x-p.px)*-.4}if(p.x>maxX){p.x=maxX;p.px=p.x+(p.x-p.px)*-.4}if(p.y<minY){p.y=minY;p.py=p.y+(p.y-p.py)*-.4}if(p.y>maxY){p.y=maxY;p.py=p.y+(p.y-p.py)*-.4}}
 function ragdollLoop(){
-  const gravity=.22,damp=.985;
+  const gravity=.16,damp=.98;
   for(const p of Object.values(points)){if(grabbed===p)continue;const vx=(p.x-p.px)*damp,vy=(p.y-p.py)*damp;p.px=p.x;p.py=p.y;p.x+=vx;p.y+=vy+gravity}
-  for(let k=0;k<3;k++){
+  for(let k=0;k<4;k++){
     constrain('head','torso',23,46,29,0,0);
     constrain('torso','armL',0,8,14.5,0,0);
     constrain('torso','armR',TORSO_W,8,14.5,0,0);
