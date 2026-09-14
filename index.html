@@ -7,11 +7,7 @@
   <style>
     html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
     body { background: white; }
-    .sphere {
-      position: absolute; width: 104px; height: 104px;
-      border-radius: 50%;
-      box-shadow: 6px 8px 14px rgba(0, 0, 0, 0.25); z-index: 2;
-    }
+    .sphere { position: absolute; width: 104px; height: 104px; border-radius: 50%; box-shadow: 6px 8px 14px rgba(0,0,0,.25); z-index: 2; }
     .red { background: radial-gradient(circle at 32% 28%, #ff7777 0%, #e00000 42%, #8b0000 100%); }
     .blue { background: radial-gradient(circle at 32% 28%, #77bbff 0%, #0066dd 42%, #003b80 100%); }
     .yellow { background: radial-gradient(circle at 32% 28%, #fff477 0%, #ffd400 42%, #c99d00 100%); }
@@ -21,57 +17,19 @@
     .smile { top: 53px; border-bottom: 5px solid #111; border-radius: 50%; }
     .frown { top: 61px; border-top: 5px solid #111; border-radius: 50%; }
     .straight { top: 61px; height: 5px; background: #111; border-radius: 0; }
-    .confetti {
-      position: fixed; width: 7px; height: 12px; pointer-events: none; z-index: 1;
-      animation: confetti-fly 900ms cubic-bezier(.15,.7,.3,1) forwards;
-    }
-    .mammott-pop {
-      position: fixed; width: 90px; height: 90px; object-fit: contain;
-      pointer-events: none; z-index: 1; opacity: 0;
-      animation: mammott-fade 1000ms ease-out forwards;
-      transform: translate(-50%, -50%);
-    }
-    .collision-explosion {
-      position: fixed;
-      width: 34px; height: 34px;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 3;
-      transform: translate(-50%, -50%) scale(.2);
-      background: radial-gradient(circle, #ffffff 0%, var(--light) 18%, var(--main) 48%, var(--dark) 74%, transparent 100%);
-      box-shadow: 0 0 18px var(--main), 0 0 42px var(--main), 0 0 75px var(--dark);
-      animation: collision-explosion 650ms cubic-bezier(.1,.8,.2,1) forwards;
-    }
-    @keyframes confetti-fly {
-      0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
-      100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rotation)) scale(.7); opacity: 0; }
-    }
-    @keyframes mammott-fade {
-      0% { opacity: 0; transform: translate(-50%, -50%) scale(.85); }
-      15% { opacity: .45; transform: translate(-50%, -50%) scale(1); }
-      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
-    }
-    @keyframes collision-explosion {
-      0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); filter: blur(2px); }
-      18% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); filter: blur(0); }
-      55% { opacity: .95; transform: translate(-50%, -50%) scale(2.7); }
-      100% { opacity: 0; transform: translate(-50%, -50%) scale(6); filter: blur(5px); }
-    }
+    .confetti { position: fixed; width: 7px; height: 12px; pointer-events: none; z-index: 1; animation: confetti-fly 900ms cubic-bezier(.15,.7,.3,1) forwards; }
+    .mammott-pop { position: fixed; width: 90px; height: 90px; object-fit: contain; pointer-events: none; z-index: 1; opacity: 0; animation: mammott-fade 1000ms ease-out forwards; transform: translate(-50%,-50%); }
+    .collision-explosion { position: fixed; width: 34px; height: 34px; border-radius: 50%; pointer-events: none; z-index: 3; transform: translate(-50%,-50%) scale(.2); background: radial-gradient(circle, #fff 0%, var(--light) 18%, var(--main) 48%, var(--dark) 74%, transparent 100%); box-shadow: 0 0 18px var(--main), 0 0 42px var(--main), 0 0 75px var(--dark); animation: collision-explosion 650ms cubic-bezier(.1,.8,.2,1) forwards; }
+    @keyframes confetti-fly { 0% { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; } 100% { transform: translate(var(--dx),var(--dy)) rotate(var(--rotation)) scale(.7); opacity: 0; } }
+    @keyframes mammott-fade { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.85); } 15% { opacity: .45; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.05); } }
+    @keyframes collision-explosion { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.2); filter: blur(2px); } 18% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); filter: blur(0); } 55% { opacity: .95; transform: translate(-50%,-50%) scale(2.7); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(6); filter: blur(5px); } }
   </style>
 </head>
 <body>
-  <div class="sphere red" id="redSphere" aria-label="Smiling red sphere">
-    <div class="eye left"></div><div class="eye right"></div><div class="mouth smile"></div>
-  </div>
-  <div class="sphere blue" id="blueSphere" aria-label="Frowning blue sphere">
-    <div class="eye left"></div><div class="eye right"></div><div class="mouth frown"></div>
-  </div>
-  <div class="sphere yellow" id="yellowSphere" aria-label="Indifferent yellow sphere">
-    <div class="eye left"></div><div class="eye right"></div><div class="mouth straight"></div>
-  </div>
-  <audio id="collisionSound" preload="auto">
-    <source src="Mammott_Memory_Sample.mp3.mpeg" type="audio/mpeg">
-  </audio>
+  <div class="sphere red" id="redSphere" aria-label="Smiling red sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth smile"></div></div>
+  <div class="sphere blue" id="blueSphere" aria-label="Frowning blue sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth frown"></div></div>
+  <div class="sphere yellow" id="yellowSphere" aria-label="Indifferent yellow sphere"><div class="eye left"></div><div class="eye right"></div><div class="mouth straight"></div></div>
+  <audio id="collisionSound" preload="auto"><source src="Mammott_Memory_Sample.mp3.mpeg" type="audio/mpeg"></audio>
   <script>
     const collisionSound = document.getElementById('collisionSound');
     const redSphere = document.getElementById('redSphere');
@@ -98,9 +56,7 @@
           for (let i = 0; i < source.length; i++) target[i] = source[source.length - 1 - i];
         }
         reversedBounceReady = true;
-      } catch (error) {
-        reversedBounceReady = false;
-      }
+      } catch (error) { reversedBounceReady = false; }
     }
     prepareReversedSound();
 
@@ -118,9 +74,28 @@
       const gain = audioContext.createGain();
       source.buffer = reversedBounceBuffer;
       gain.gain.value = 1;
-      source.connect(gain);
-      gain.connect(audioContext.destination);
-      source.start();
+      source.connect(gain); gain.connect(audioContext.destination); source.start();
+    }
+
+    function playYellowSound() {
+      try {
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+        const now = audioContext.currentTime;
+        const notes = [523.25, 659.25, 783.99];
+        notes.forEach((frequency, index) => {
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.type = 'triangle';
+          oscillator.frequency.value = frequency;
+          const start = now + index * 0.07;
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.exponentialRampToValueAtTime(0.16, start + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
+          oscillator.connect(gain); gain.connect(audioContext.destination);
+          oscillator.start(start); oscillator.stop(start + 0.2);
+        });
+      } catch (error) {}
     }
 
     function randomPosition(existingPositions) {
@@ -128,172 +103,76 @@
       for (let i = 0; i < 200; i++) {
         px = Math.random() * Math.max(0, window.innerWidth - size);
         py = Math.random() * Math.max(0, window.innerHeight - size);
-        if (existingPositions.every(([x, y]) => Math.hypot(px - x, py - y) >= size + gap)) return [px, py];
+        if (existingPositions.every(([x,y]) => Math.hypot(px-x, py-y) >= size + gap)) return [px,py];
       }
-      return [Math.max(0, Math.min(px, window.innerWidth - size)), Math.max(0, Math.min(py, window.innerHeight - size))];
+      return [Math.max(0, Math.min(px, window.innerWidth-size)), Math.max(0, Math.min(py, window.innerHeight-size))];
     }
 
-    const red = { name: 'red', element: redSphere, x: 0, y: 0, dx: 0, dy: 0 };
-    const blue = { name: 'blue', element: blueSphere, x: 0, y: 0, dx: 0, dy: 0 };
-    const yellow = { name: 'yellow', element: yellowSphere, x: 0, y: 0, dx: 0, dy: 0 };
-    const balls = [red, blue, yellow];
+    const red = { name:'red', element:redSphere, x:0, y:0, dx:0, dy:0 };
+    const blue = { name:'blue', element:blueSphere, x:0, y:0, dx:0, dy:0 };
+    const yellow = { name:'yellow', element:yellowSphere, x:0, y:0, dx:0, dy:0 };
+    const balls = [red,blue,yellow];
+    [red.x,red.y] = randomPosition([]);
+    [blue.x,blue.y] = randomPosition([[red.x,red.y]]);
+    [yellow.x,yellow.y] = randomPosition([[red.x,red.y],[blue.x,blue.y]]);
 
-    [red.x, red.y] = randomPosition([]);
-    [blue.x, blue.y] = randomPosition([[red.x, red.y]]);
-    [yellow.x, yellow.y] = randomPosition([[red.x, red.y], [blue.x, blue.y]]);
-
-    function randomVelocity() {
-      return {
-        dx: (Math.random() < 0.5 ? -1 : 1) * (2.8 + Math.random() * 1.8),
-        dy: (Math.random() < 0.5 ? -1 : 1) * (2.2 + Math.random() * 1.8)
-      };
-    }
-
+    function randomVelocity() { return { dx:(Math.random()<.5?-1:1)*(2.8+Math.random()*1.8), dy:(Math.random()<.5?-1:1)*(2.2+Math.random()*1.8) }; }
     for (const ball of balls) {
       const velocity = randomVelocity();
-      ball.dx = velocity.dx;
-      ball.dy = velocity.dy;
-      ball.element.style.left = ball.x + 'px';
-      ball.element.style.top = ball.y + 'px';
+      ball.dx = velocity.dx; ball.dy = velocity.dy;
+      ball.element.style.left = ball.x+'px'; ball.element.style.top = ball.y+'px';
     }
 
     const lastCollisions = new Map();
-
     function playCollisionSound() {
-      collisionSound.currentTime = 0;
-      collisionSound.playbackRate = 0.72;
-      collisionSound.volume = 1;
-      collisionSound.play().catch(() => {});
+      collisionSound.currentTime = 0; collisionSound.playbackRate = 0.72; collisionSound.volume = 1; collisionSound.play().catch(() => {});
     }
-
-    function mammottBurst(edgeX, edgeY) {
-      const mammott = document.createElement('img');
-      mammott.className = 'mammott-pop';
-      mammott.src = 'mammot.jpg';
-      mammott.alt = '';
-      mammott.style.left = edgeX + 'px';
-      mammott.style.top = edgeY + 'px';
-      document.body.appendChild(mammott);
-      setTimeout(() => mammott.remove(), 1050);
+    function mammottBurst(edgeX,edgeY) {
+      const mammott = document.createElement('img'); mammott.className='mammott-pop'; mammott.src='mammot.jpg'; mammott.alt=''; mammott.style.left=edgeX+'px'; mammott.style.top=edgeY+'px'; document.body.appendChild(mammott); setTimeout(()=>mammott.remove(),1050);
     }
-
-    function confettiBurst(edgeX, edgeY, directionX, directionY) {
-      const colors = ['#ff0000','#00aaff','#ffd400','#22bb55','#aa44ff','#ff66aa','#ff7a00','#00dddd','#ff33cc'];
-      const count = 90;
-      for (let i = 0; i < count; i++) {
-        const piece = document.createElement('div');
-        piece.className = 'confetti';
-        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-        piece.style.left = edgeX + 'px';
-        piece.style.top = edgeY + 'px';
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 70 + Math.random() * 190;
-        let finalX = Math.cos(angle) * distance;
-        let finalY = Math.sin(angle) * distance;
-        if (directionX !== 0) finalX = directionX * (50 + Math.random() * 180);
-        if (directionY !== 0) finalY = directionY * (50 + Math.random() * 180);
-        piece.style.setProperty('--dx', finalX + 'px');
-        piece.style.setProperty('--dy', finalY + 'px');
-        piece.style.setProperty('--rotation', (Math.random() * 1440 - 720) + 'deg');
-        piece.style.width = (4 + Math.random() * 6) + 'px';
-        piece.style.height = (7 + Math.random() * 10) + 'px';
-        document.body.appendChild(piece);
-        setTimeout(() => piece.remove(), 950);
+    function confettiBurst(edgeX,edgeY,directionX,directionY) {
+      const colors=['#ff0000','#00aaff','#ffd400','#22bb55','#aa44ff','#ff66aa','#ff7a00','#00dddd','#ff33cc'];
+      for(let i=0;i<90;i++) {
+        const piece=document.createElement('div'); piece.className='confetti'; piece.style.background=colors[Math.floor(Math.random()*colors.length)]; piece.style.left=edgeX+'px'; piece.style.top=edgeY+'px';
+        const angle=Math.random()*Math.PI*2, distance=70+Math.random()*190; let finalX=Math.cos(angle)*distance, finalY=Math.sin(angle)*distance;
+        if(directionX!==0) finalX=directionX*(50+Math.random()*180); if(directionY!==0) finalY=directionY*(50+Math.random()*180);
+        piece.style.setProperty('--dx',finalX+'px'); piece.style.setProperty('--dy',finalY+'px'); piece.style.setProperty('--rotation',(Math.random()*1440-720)+'deg'); piece.style.width=(4+Math.random()*6)+'px'; piece.style.height=(7+Math.random()*10)+'px'; document.body.appendChild(piece); setTimeout(()=>piece.remove(),950);
       }
     }
-
-    function collisionExplosion(x, y, type) {
-      const colors = {
-        orange: ['#ffffff', '#ffd0a0', '#ff7a00', '#b83b00'],
-        green: ['#ffffff', '#aaffbb', '#22bb55', '#087a32'],
-        purple: ['#ffffff', '#d88cff', '#8a2be2', '#4b0082']
-      };
-      const [light, main, mid, dark] = colors[type];
-      const explosion = document.createElement('div');
-      explosion.className = 'collision-explosion';
-      explosion.style.setProperty('--light', light);
-      explosion.style.setProperty('--main', main);
-      explosion.style.setProperty('--dark', dark);
-      explosion.style.left = x + 'px';
-      explosion.style.top = y + 'px';
-      document.body.appendChild(explosion);
-      setTimeout(() => explosion.remove(), 700);
+    function collisionExplosion(x,y,type) {
+      const colors={orange:['#ffffff','#ffd0a0','#ff7a00','#b83b00'],green:['#ffffff','#aaffbb','#22bb55','#087a32'],purple:['#ffffff','#d88cff','#8a2be2','#4b0082']};
+      const [light,main,mid,dark]=colors[type]; const explosion=document.createElement('div'); explosion.className='collision-explosion'; explosion.style.setProperty('--light',light); explosion.style.setProperty('--main',main); explosion.style.setProperty('--dark',dark); explosion.style.left=x+'px'; explosion.style.top=y+'px'; document.body.appendChild(explosion); setTimeout(()=>explosion.remove(),700);
     }
-
-    function edgeEffects(ball, dx, dy) {
-      if (ball.name === 'blue') {
-        playReversedBounceSound();
-      } else {
-        playNormalBounceSound();
-      }
-      mammottBurst(ball.x + size / 2, ball.y + size / 2);
-      confettiBurst(ball.x + size / 2, ball.y + size / 2, dx, dy);
+    function edgeEffects(ball,dx,dy) {
+      if(ball.name==='blue') playReversedBounceSound();
+      else if(ball.name==='yellow') playYellowSound();
+      else playNormalBounceSound();
+      mammottBurst(ball.x+size/2,ball.y+size/2); confettiBurst(ball.x+size/2,ball.y+size/2,dx,dy);
     }
-
-    function handleCollision(a, b) {
-      const centerDX = (b.x + size / 2) - (a.x + size / 2);
-      const centerDY = (b.y + size / 2) - (a.y + size / 2);
-      const distance = Math.hypot(centerDX, centerDY);
-      const minDistance = size;
-      if (distance >= minDistance || distance === 0) return;
-
-      const nx = centerDX / distance;
-      const ny = centerDY / distance;
-      const relativeVelocity = (b.dx - a.dx) * nx + (b.dy - a.dy) * ny;
-      const key = [a.name, b.name].sort().join('-');
-      const now = performance.now();
-      if (relativeVelocity >= 0 || now - (lastCollisions.get(key) || 0) <= collisionCooldown) return;
-
-      const overlap = minDistance - distance;
-      const collisionX = (a.x + b.x + size) / 2;
-      const collisionY = (a.y + b.y + size) / 2;
-      a.x -= nx * overlap / 2;
-      a.y -= ny * overlap / 2;
-      b.x += nx * overlap / 2;
-      b.y += ny * overlap / 2;
-
-      const oldDX = a.dx, oldDY = a.dy;
-      a.dx = b.dx; a.dy = b.dy;
-      b.dx = oldDX; b.dy = oldDY;
-      lastCollisions.set(key, now);
-
+    function handleCollision(a,b) {
+      const centerDX=(b.x+size/2)-(a.x+size/2), centerDY=(b.y+size/2)-(a.y+size/2), distance=Math.hypot(centerDX,centerDY), minDistance=size;
+      if(distance>=minDistance || distance===0) return;
+      const nx=centerDX/distance, ny=centerDY/distance, relativeVelocity=(b.dx-a.dx)*nx+(b.dy-a.dy)*ny, key=[a.name,b.name].sort().join('-'), now=performance.now();
+      if(relativeVelocity>=0 || now-(lastCollisions.get(key)||0)<=collisionCooldown) return;
+      const overlap=minDistance-distance, collisionX=(a.x+b.x+size)/2, collisionY=(a.y+b.y+size)/2;
+      a.x-=nx*overlap/2; a.y-=ny*overlap/2; b.x+=nx*overlap/2; b.y+=ny*overlap/2;
+      const oldDX=a.dx,oldDY=a.dy; a.dx=b.dx;a.dy=b.dy;b.dx=oldDX;b.dy=oldDY; lastCollisions.set(key,now);
       playCollisionSound();
-      if (key === 'red-yellow') collisionExplosion(collisionX, collisionY, 'orange');
-      if (key === 'blue-yellow') collisionExplosion(collisionX, collisionY, 'green');
-      if (key === 'blue-red') collisionExplosion(collisionX, collisionY, 'purple');
+      if(key==='red-yellow') collisionExplosion(collisionX,collisionY,'orange');
+      if(key==='blue-yellow') collisionExplosion(collisionX,collisionY,'green');
+      if(key==='blue-red') collisionExplosion(collisionX,collisionY,'purple');
     }
-
     function move() {
-      const maxX = Math.max(0, window.innerWidth - size);
-      const maxY = Math.max(0, window.innerHeight - size);
-
-      for (const ball of balls) {
-        ball.x += ball.dx;
-        ball.y += ball.dy;
-
-        if (ball.x <= 0 || ball.x >= maxX) {
-          ball.x = Math.max(0, Math.min(ball.x, maxX));
-          ball.dx *= -1;
-          edgeEffects(ball, ball.dx > 0 ? 1 : -1, 0);
-        }
-        if (ball.y <= 0 || ball.y >= maxY) {
-          ball.y = Math.max(0, Math.min(ball.y, maxY));
-          ball.dy *= -1;
-          edgeEffects(ball, 0, ball.dy > 0 ? 1 : -1);
-        }
+      const maxX=Math.max(0,window.innerWidth-size), maxY=Math.max(0,window.innerHeight-size);
+      for(const ball of balls) {
+        ball.x+=ball.dx; ball.y+=ball.dy;
+        if(ball.x<=0 || ball.x>=maxX) { ball.x=Math.max(0,Math.min(ball.x,maxX)); ball.dx*=-1; edgeEffects(ball,ball.dx>0?1:-1,0); }
+        if(ball.y<=0 || ball.y>=maxY) { ball.y=Math.max(0,Math.min(ball.y,maxY)); ball.dy*=-1; edgeEffects(ball,0,ball.dy>0?1:-1); }
       }
-
-      handleCollision(red, blue);
-      handleCollision(red, yellow);
-      handleCollision(blue, yellow);
-
-      for (const ball of balls) {
-        ball.element.style.left = ball.x + 'px';
-        ball.element.style.top = ball.y + 'px';
-      }
+      handleCollision(red,blue); handleCollision(red,yellow); handleCollision(blue,yellow);
+      for(const ball of balls) { ball.element.style.left=ball.x+'px'; ball.element.style.top=ball.y+'px'; }
       requestAnimationFrame(move);
     }
-
     move();
   </script>
 </body>
