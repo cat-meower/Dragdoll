@@ -29,6 +29,17 @@
       animation: mammott-fade 1000ms ease-out forwards;
       transform: translate(-50%, -50%);
     }
+    .purple-explosion {
+      position: fixed;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 3;
+      transform: translate(-50%, -50%) scale(.2);
+      background: radial-gradient(circle, #ffffff 0%, #d88cff 18%, #8a2be2 45%, #4b0082 72%, transparent 100%);
+      box-shadow: 0 0 18px #9b4dff, 0 0 42px #7b1fff, 0 0 75px #5b00ff;
+      animation: hollow-purple 650ms cubic-bezier(.1,.8,.2,1) forwards;
+    }
     @keyframes confetti-fly {
       0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
       100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rotation)) scale(.7); opacity: 0; }
@@ -37,6 +48,12 @@
       0% { opacity: 0; transform: translate(-50%, -50%) scale(.85); }
       15% { opacity: .45; transform: translate(-50%, -50%) scale(1); }
       100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
+    }
+    @keyframes hollow-purple {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); filter: blur(2px); }
+      18% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); filter: blur(0); }
+      55% { opacity: .95; transform: translate(-50%, -50%) scale(2.7); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(6); filter: blur(5px); }
     }
   </style>
 </head>
@@ -68,11 +85,7 @@
         const response = await fetch('Mammott_Memory_Sample.mp3.mpeg');
         const arrayBuffer = await response.arrayBuffer();
         const originalBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        reversedBounceBuffer = audioContext.createBuffer(
-          originalBuffer.numberOfChannels,
-          originalBuffer.length,
-          originalBuffer.sampleRate
-        );
+        reversedBounceBuffer = audioContext.createBuffer(originalBuffer.numberOfChannels, originalBuffer.length, originalBuffer.sampleRate);
         for (let channel = 0; channel < originalBuffer.numberOfChannels; channel++) {
           const source = originalBuffer.getChannelData(channel);
           const target = reversedBounceBuffer.getChannelData(channel);
@@ -160,6 +173,15 @@
       }
     }
 
+    function hollowPurpleExplosion(x, y) {
+      const explosion = document.createElement('div');
+      explosion.className = 'purple-explosion';
+      explosion.style.left = x + 'px';
+      explosion.style.top = y + 'px';
+      document.body.appendChild(explosion);
+      setTimeout(() => explosion.remove(), 700);
+    }
+
     function edgeEffects(x, y, dx, dy) {
       playReversedBounceSound();
       mammottBurst(x + size / 2, y + size / 2);
@@ -199,6 +221,8 @@
         const relativeVelocity = (blueDX - redDX) * nx + (blueDY - redDY) * ny;
         if (relativeVelocity < 0 && performance.now() - lastCollision > collisionCooldown) {
           const overlap = minDistance - distance;
+          const collisionX = (redX + blueX + size) / 2;
+          const collisionY = (redY + blueY + size) / 2;
           redX -= nx * overlap / 2; redY -= ny * overlap / 2;
           blueX += nx * overlap / 2; blueY += ny * overlap / 2;
 
@@ -208,6 +232,7 @@
 
           lastCollision = performance.now();
           playCollisionSound();
+          hollowPurpleExplosion(collisionX, collisionY);
         }
       }
 
