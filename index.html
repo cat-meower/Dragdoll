@@ -3,23 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Red, Blue and Yellow Balls</title>
+  <title>Rainbow Balls</title>
   <style>
     html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
     body { background: white; }
     .sphere { position: absolute; width: 80px; height: 80px; border-radius: 50%; box-shadow: 4px 6px 10px rgba(0,0,0,.2); z-index: 2; }
     .red { background: radial-gradient(circle at 32% 28%, #ff7777 0%, #e00000 42%, #8b0000 100%); }
-    .blue { background: radial-gradient(circle at 32% 28%, #77bbff 0%, #0066dd 42%, #003b80 100%); }
+    .orange { background: radial-gradient(circle at 32% 28%, #ffd08a 0%, #ff8c00 42%, #b84f00 100%); }
     .yellow { background: radial-gradient(circle at 32% 28%, #fff477 0%, #ffd400 42%, #c99d00 100%); }
+    .green { background: radial-gradient(circle at 32% 28%, #8cff9a 0%, #22bb55 42%, #087a32 100%); }
+    .blue { background: radial-gradient(circle at 32% 28%, #77bbff 0%, #0066dd 42%, #003b80 100%); }
+    .indigo { background: radial-gradient(circle at 32% 28%, #aaa0ff 0%, #5146d8 42%, #28216f 100%); }
+    .pink { background: radial-gradient(circle at 32% 28%, #ffb0d0 0%, #ff66aa 42%, #b92d70 100%); }
     .eye { position: absolute; top: 24px; width: 10px; height: 13px; background: #111; border-radius: 50%; }
     .eye.left { left: 23px; } .eye.right { right: 23px; }
     .mouth { position: absolute; left: 24px; width: 32px; height: 16px; }
+    .smile-big { top: 38px; border-bottom: 6px solid #111; border-radius: 50%; }
     .smile { top: 41px; border-bottom: 4px solid #111; border-radius: 50%; }
+    .smile-small { top: 44px; border-bottom: 3px solid #111; border-radius: 50%; }
+    .neutral { top: 47px; height: 4px; background: #111; border-radius: 0; }
+    .frown-small { top: 47px; border-top: 3px solid #111; border-radius: 50%; }
     .frown { top: 47px; border-top: 4px solid #111; border-radius: 50%; }
-    .straight { top: 47px; height: 4px; background: #111; border-radius: 0; }
+    .frown-deep { top: 44px; border-top: 6px solid #111; border-radius: 50%; }
     .confetti { position: fixed; width: 6px; height: 9px; pointer-events: none; z-index: 1; animation: confetti-fly 700ms ease-out forwards; }
     .mammott-pop { position: fixed; width: 70px; height: 70px; object-fit: contain; pointer-events: none; z-index: 1; opacity: 0; animation: mammott-fade 750ms ease-out forwards; transform: translate(-50%,-50%); }
-    .collision-explosion { position: fixed; width: 28px; height: 28px; border-radius: 50%; pointer-events: none; z-index: 3; transform: translate(-50%,-50%) scale(.2); background: radial-gradient(circle, #fff 0%, var(--light) 20%, var(--main) 55%, var(--dark) 78%, transparent 100%); box-shadow: 0 0 10px var(--main), 0 0 22px var(--main); animation: collision-explosion 450ms ease-out forwards; }
+    .collision-explosion { position: fixed; width: 28px; height: 28px; border-radius: 50%; pointer-events: none; z-index: 3; transform: translate(-50%,-50%) scale(.2); background: radial-gradient(circle, #fff 0%, #ffcc66 20%, #ff8c00 55%, #a94d00 78%, transparent 100%); box-shadow: 0 0 10px #ff8c00, 0 0 22px #ff8c00; animation: collision-explosion 450ms ease-out forwards; }
     @keyframes confetti-fly { 0% { transform: translate(0,0) rotate(0deg); opacity: 1; } 100% { transform: translate(var(--dx),var(--dy)) rotate(var(--rotation)) scale(.7); opacity: 0; } }
     @keyframes mammott-fade { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.9); } 20% { opacity: .35; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.03); } }
     @keyframes collision-explosion { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.3); } 20% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(3.5); } }
@@ -34,7 +42,7 @@
     const size = 80;
     const gap = 10;
     const collisionCooldown = 350;
-    const ballTypes = Array(8).fill('red').concat(Array(8).fill('blue'), Array(8).fill('yellow'));
+    const ballTypes = ['red','orange','yellow','green','blue','indigo','pink'];
 
     let audioContext = null;
     let reversedBounceBuffer = null;
@@ -64,7 +72,16 @@
       ball.setAttribute('aria-label', `${type} sphere`);
       const eyeLeft = document.createElement('div'); eyeLeft.className = 'eye left';
       const eyeRight = document.createElement('div'); eyeRight.className = 'eye right';
-      const mouth = document.createElement('div'); mouth.className = `mouth ${type === 'red' ? 'smile' : type === 'blue' ? 'frown' : 'straight'}`;
+      const mouthClass = {
+        red: 'smile-big',
+        orange: 'smile',
+        yellow: 'smile-small',
+        green: 'neutral',
+        blue: 'frown-small',
+        indigo: 'frown',
+        pink: 'frown-deep'
+      }[type];
+      const mouth = document.createElement('div'); mouth.className = `mouth ${mouthClass}`;
       ball.append(eyeLeft, eyeRight, mouth);
       ballsContainer.appendChild(ball);
       return ball;
@@ -133,7 +150,7 @@
       const mammott = document.createElement('img'); mammott.className='mammott-pop'; mammott.src='mammot.jpg'; mammott.alt=''; mammott.style.left=edgeX+'px'; mammott.style.top=edgeY+'px'; document.body.appendChild(mammott); setTimeout(()=>mammott.remove(),800);
     }
     function confettiBurst(edgeX,edgeY,directionX,directionY) {
-      const colors=['#ff0000','#00aaff','#ffd400','#22bb55','#aa44ff','#ff66aa','#ff7a00','#00dddd'];
+      const colors=['#ff0000','#ff8c00','#ffd400','#22bb55','#0066dd','#5146d8','#ff66aa'];
       for(let i=0;i<25;i++) {
         const piece=document.createElement('div'); piece.className='confetti'; piece.style.background=colors[Math.floor(Math.random()*colors.length)]; piece.style.left=edgeX+'px'; piece.style.top=edgeY+'px';
         const angle=Math.random()*Math.PI*2, distance=40+Math.random()*100; let finalX=Math.cos(angle)*distance, finalY=Math.sin(angle)*distance;
@@ -141,10 +158,8 @@
         piece.style.setProperty('--dx',finalX+'px'); piece.style.setProperty('--dy',finalY+'px'); piece.style.setProperty('--rotation',(Math.random()*720-360)+'deg'); document.body.appendChild(piece); setTimeout(()=>piece.remove(),750);
       }
     }
-    function collisionExplosion(x,y,type) {
-      const colors={orange:['#ffffff','#ff7a00','#b83b00'],green:['#ffffff','#22bb55','#087a32'],purple:['#ffffff','#8a2be2','#4b0082']};
-      const [light,main,dark]=colors[type];
-      const explosion=document.createElement('div'); explosion.className='collision-explosion'; explosion.style.setProperty('--light',light); explosion.style.setProperty('--main',main); explosion.style.setProperty('--dark',dark); explosion.style.left=x+'px'; explosion.style.top=y+'px'; document.body.appendChild(explosion); setTimeout(()=>explosion.remove(),500);
+    function collisionExplosion(x,y) {
+      const explosion=document.createElement('div'); explosion.className='collision-explosion'; explosion.style.left=x+'px'; explosion.style.top=y+'px'; document.body.appendChild(explosion); setTimeout(()=>explosion.remove(),500);
     }
     function edgeEffects(ball,dx,dy) {
       if(ball.name==='blue') playReversedBounceSound();
@@ -161,10 +176,7 @@
       a.x-=nx*overlap/2; a.y-=ny*overlap/2; b.x+=nx*overlap/2; b.y+=ny*overlap/2;
       const oldDX=a.dx,oldDY=a.dy; a.dx=b.dx;a.dy=b.dy;b.dx=oldDX;b.dy=oldDY; lastCollisions.set(key,now);
       playCollisionSound();
-      const type=[a.name,b.name].sort().join('-');
-      if(type==='red-yellow') collisionExplosion(collisionX,collisionY,'orange');
-      if(type==='blue-yellow') collisionExplosion(collisionX,collisionY,'green');
-      if(type==='blue-red') collisionExplosion(collisionX,collisionY,'purple');
+      collisionExplosion(collisionX,collisionY);
     }
     function move() {
       const maxX=Math.max(0,window.innerWidth-size), maxY=Math.max(0,window.innerHeight-size);
