@@ -76,7 +76,6 @@ function limbEdgeBounce(p){const floor=innerHeight-FLOOR_H;if(p.x<0){p.x=0;p.px=
 function ragdollLoop(){
   const gravity=.055,damp=.997;
   for(const p of Object.values(points)){
-    if(grabbed===p)continue;
     const vx=(p.x-p.px)*damp,vy=(p.y-p.py)*damp;
     p.px=p.x;p.py=p.y;p.x+=vx;p.y+=vy+gravity;
   }
