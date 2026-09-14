@@ -47,20 +47,55 @@
   <div class="sphere blue" id="blueSphere" aria-label="Frowning blue sphere">
     <div class="eye left"></div><div class="eye right"></div><div class="mouth frown"></div>
   </div>
-  <audio id="bounceSound" preload="auto">
-    <source src="Mammott_Memory_Sample.mp3.mpeg" type="audio/mpeg">
-  </audio>
   <audio id="collisionSound" preload="auto">
     <source src="Mammott_Memory_Sample.mp3.mpeg" type="audio/mpeg">
   </audio>
   <script>
     const redSphere = document.getElementById('redSphere');
     const blueSphere = document.getElementById('blueSphere');
-    const bounceSound = document.getElementById('bounceSound');
     const collisionSound = document.getElementById('collisionSound');
     const size = 100;
     const gap = 12;
     const collisionCooldown = 350;
+
+    let audioContext = null;
+    let reversedBounceBuffer = null;
+    let reversedBounceReady = false;
+
+    async function prepareReversedSound() {
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const response = await fetch('Mammott_Memory_Sample.mp3.mpeg');
+        const arrayBuffer = await response.arrayBuffer();
+        const originalBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        reversedBounceBuffer = audioContext.createBuffer(
+          originalBuffer.numberOfChannels,
+          originalBuffer.length,
+          originalBuffer.sampleRate
+        );
+        for (let channel = 0; channel < originalBuffer.numberOfChannels; channel++) {
+          const source = originalBuffer.getChannelData(channel);
+          const target = reversedBounceBuffer.getChannelData(channel);
+          for (let i = 0; i < source.length; i++) target[i] = source[source.length - 1 - i];
+        }
+        reversedBounceReady = true;
+      } catch (error) {
+        reversedBounceReady = false;
+      }
+    }
+    prepareReversedSound();
+
+    function playReversedBounceSound() {
+      if (!reversedBounceReady || !audioContext) return;
+      if (audioContext.state === 'suspended') audioContext.resume().catch(() => {});
+      const source = audioContext.createBufferSource();
+      const gain = audioContext.createGain();
+      source.buffer = reversedBounceBuffer;
+      gain.gain.value = 1;
+      source.connect(gain);
+      gain.connect(audioContext.destination);
+      source.start();
+    }
 
     function randomPosition(existingX, existingY) {
       let px, py;
@@ -82,11 +117,6 @@
 
     redSphere.style.left = redX + 'px'; redSphere.style.top = redY + 'px';
     blueSphere.style.left = blueX + 'px'; blueSphere.style.top = blueY + 'px';
-
-    function playSound(audio) {
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-    }
 
     function playCollisionSound() {
       collisionSound.currentTime = 0;
@@ -131,7 +161,7 @@
     }
 
     function edgeEffects(x, y, dx, dy) {
-      playSound(bounceSound);
+      playReversedBounceSound();
       mammottBurst(x + size / 2, y + size / 2);
       confettiBurst(x + size / 2, y + size / 2, dx, dy);
     }
